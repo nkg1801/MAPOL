@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Mapping>
+  <eClass Number="21131724" eClassDescription ="Locking Unit" VOM="" MDVisualObjectMapping="InterlockView.emf" XAVisualObjectMapping=""/>
+  <eClass Number="22390500" eClassDescription ="Heat generator (heating)" VOM="HeatExchanger.emf" MDVisualObjectMapping="HeatExchanger.emf" XAVisualObjectMapping="HeatExchanger.emf"/>
+  <eClass Number="27200200" eClassDescription ="Heat generator (heating)" VOM="AnalogIndicator.emf" MDVisualObjectMapping="HeatExchanger.emf" XAVisualObjectMapping="HeatExchanger.emf"/>
+  <eClass Number="27200205" eClassDescription ="Digital temperature gauge" VOM="digital-temperature-gauge.png" MDVisualObjectMapping="digital-temperature-gauge.png" XAVisualObjectMapping=""/>
+  <eClass Number="27200492" eClassDescription ="" VOM="" MDVisualObjectMapping="FlowTransmitter.emf" XAVisualObjectMapping=""/>
+  <eClass Number="27200589" eClassDescription ="" VOM="" MDVisualObjectMapping="LevelTransmitter.emf" XAVisualObjectMapping=""/>
+  <eClass Number="27200600" eClassDescription ="" VOM="" MDVisualObjectMapping="PressureTransmitter.emf" XAVisualObjectMapping=""/>
+  <eClass Number="27210101" eClassDescription ="" VOM="" MDVisualObjectMapping="BinaryIndicator.emf" XAVisualObjectMapping=""/>
+  <eClass Number="27210790" eClassDescription ="" VOM="" MDVisualObjectMapping="Controller.emf" XAVisualObjectMapping=""/>
+  <eClass Number="27029090" eClassDescription ="Electrical drive (other, unspecified)" VOM="" MDVisualObjectMapping="BlockValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="27209090" eClassDescription ="Measurement technology, process measurement technology (other, unspecified)" VOM="" MDVisualObjectMapping="AnalogIndicator.emf" XAVisualObjectMapping=""/>
+  <eClass Number="27220601" eClassDescription ="Magnetic valve" VOM="" MDVisualObjectMapping="BlockValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="27273190" eClassDescription ="Sensor for process technology (unspecified)" VOM="pressure-gauge.png" MDVisualObjectMapping="pressure-gauge.png" XAVisualObjectMapping=""/>
+
+  <eClass Number="32070400" eClassDescription ="Measuring vessel (lab)" VOM="Vessel.emf" MDVisualObjectMapping="Vessel.emf" XAVisualObjectMapping=""/>
+  <eClass Number="32109000" eClassDescription ="Shaking, stirring, mixing technologie (lab, other)" VOM="Mixer.emf" MDVisualObjectMapping="Mixer.emf" XAVisualObjectMapping="Mixer.emf"/>
+  <eClass Number="32120303" eClassDescription ="Lab Thermometer" VOM="temperature-sensor.png" MDVisualObjectMapping="temperature-sensor.png" XAVisualObjectMapping="Mixer.emf"/>
+  
+  <eClass Number="36010190" eClassDescription ="Column (unspecified)" VOM="Column.emf" MDVisualObjectMapping="Column.emf" XAVisualObjectMapping="Column.emf"/>
+  <eClass Number="36020190" eClassDescription ="Reactor (unspecified)" VOM="" MDVisualObjectMapping="Reactor.emf" XAVisualObjectMapping=""/>
+  <eClass Number="36020191" eClassDescription ="Reactor (parts)" VOM="" MDVisualObjectMapping="Reactor.emf" XAVisualObjectMapping=""/>
+  <eClass Number="36030000" eClassDescription ="Container" VOM="" MDVisualObjectMapping="Column.emf" XAVisualObjectMapping=""/>
+  <eClass Number="36030101" eClassDescription ="" VOM="" MDVisualObjectMapping="Vessel.emf" XAVisualObjectMapping=""/>
+  <eClass Number="36040190" eClassDescription ="" VOM="" MDVisualObjectMapping="HeatExchanger.emf" XAVisualObjectMapping=""/>
+  <eClass Number="36090000" eClassDescription ="Mixer, agitator, kneader" VOM="" MDVisualObjectMapping="Vessel.emf" XAVisualObjectMapping=""/>
+  <eClass Number="36090590" eClassDescription ="" VOM="" MDVisualObjectMapping="Mixer.emf" XAVisualObjectMapping=""/>
+  <eClass Number="36201900" eClassDescription ="Filter (for gases)" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="36410000" eClassDescription ="" VOM="Pump.emf" MDVisualObjectMapping="Pump.emf" XAVisualObjectMapping="Pump.emf"/>
+  <eClass Number="36410190" eClassDescription ="Centrifugal pump (unspecified)" VOM="" MDVisualObjectMapping="Pump.emf" XAVisualObjectMapping=""/>
+  
+  <eClass Number="37010100" eClassDescription ="Gate valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010200" eClassDescription ="Globe valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010300" eClassDescription ="Butterfly valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010400" eClassDescription ="Ball valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  
+  <eClass Number="37010201" eClassDescription ="Shut-off valve" VOM="" MDVisualObjectMapping="BlockValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010203" eClassDescription ="ControlValve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010213" eClassDescription ="Multiport Globe Valve" VOM="" MDVisualObjectMapping="ThreewayValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010260" eClassDescription ="Bottom globe valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010260" eClassDescription ="Hydrant" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010801" eClassDescription ="Non return valve" VOM="ControlValve.emf" MDVisualObjectMapping="CheckValve.emf" XAVisualObjectMapping="ControlValve.emf"/>
+  
+  <eClass Number="37011000" eClassDescription ="Valve (with actuator)" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37011108" eClassDescription ="Pressure regulator" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="51030000" eClassDescription ="Switching valve (hydraulics)" VOM="ControlValve.emf" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="51440000" eClassDescription ="	Valve (pneumatics)" VOM="ControlValve.emf" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  
+  
+</Mapping>
