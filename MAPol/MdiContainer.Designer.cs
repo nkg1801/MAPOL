@@ -222,6 +222,7 @@
             toolStripButtonErrorList.Padding = new Padding(10, 5, 10, 5);
             toolStripButtonErrorList.Size = new Size(88, 78);
             toolStripButtonErrorList.Text = "toolStripButtonErrorList";
+            toolStripButtonErrorList.Click += toolStripButtonErrorList_Click;
             // 
             // toolStripLabel2
             // 

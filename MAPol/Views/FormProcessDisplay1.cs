@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace MAPol
 {
@@ -157,7 +158,12 @@ namespace MAPol
                 else
                 {
                     _missingEClassesMapping.Add(mtpObject.EClassClassificationClass);
-                    imageFileName = _defaultImageFileName;
+                    //imageFileName = _defaultImageFileName;
+                    string visualElement = FindReferencedElement(mtpObject.RefID);
+                    if (visualElement != string.Empty && !visualElement.Equals("ServiceControl"))
+                    {
+                        imageFileName = visualElement;
+                    }
                 }
 
                 imageFileName = imagePath + imageFileName;
@@ -278,6 +284,19 @@ namespace MAPol
                         case "MonBinDrv":
                             return "Mixer.emf";
 
+                            case "AnaDrv":
+                            return "pump.emf";
+
+                        case "MonAnaDrv":
+                            return "pump.emf";
+
+                        case "PIDCtrl":
+                            return "pidctrl.png";
+
+                        case "MonAnaVlv":   
+                            return "BlockValve.emf";
+
+
                         default:
                             _missingSymbols.Add(s.Split(',')[0]);
                             return "default.png";
@@ -340,6 +359,12 @@ namespace MAPol
                             return "BlockValve.emf";
 
                         case "DIntMan":
+                            return "BlockValve.emf";
+
+                        case "AnaManInt":
+                            return "BlockValve.emf";
+
+                        case "AnaMan":
                             return "BlockValve.emf";
 
                         default:
@@ -1144,6 +1169,8 @@ namespace MAPol
                                 }
                             }
                         }
+
+                        // active elements
                         else if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/IndicatorElement/DIntView/DIntMon")
                         {
                             string temp = x.Attributes["Name"].Value + ",DIntMon";
@@ -1192,6 +1219,64 @@ namespace MAPol
                                 }
                             }
                         }
+
+                        else if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/ActiveElement/AnaVlv/MonAnaVlv")
+                        {
+                            string temp = x.Attributes["Name"].Value + ",MonAnaVlv";
+                            foreach (XmlElement y in x)
+                            {
+                                if (y.Name == "Attribute" && y.Attributes["Name"].Value == "RefID")
+                                {
+                                    temp = temp + "," + y.Value + GetValue(y);
+                                    _activeElements.Add(temp);
+                                }
+                            }
+                        }
+
+                        else if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/ActiveElement/AnaDrv")
+                        {
+                            string temp = x.Attributes["Name"].Value + ",AnaDrv";
+                            foreach (XmlElement y in x)
+                            {
+                                if (y.Name == "Attribute" && y.Attributes["Name"].Value == "RefID")
+                                {
+                                    temp = temp + "," + y.Value + GetValue(y);
+                                    _activeElements.Add(temp);
+                                }
+                            }
+                        }
+
+                        else if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/ActiveElement/AnaDrv/MonAnaDrv")
+                        {
+                            string temp = x.Attributes["Name"].Value + ",MonAnaDrv";
+                            foreach (XmlElement y in x)
+                            {
+                                if (y.Name == "Attribute" && y.Attributes["Name"].Value == "RefID")
+                                {
+                                    temp = temp + "," + y.Value + GetValue(y);
+                                    _activeElements.Add(temp);
+                                }
+                            }
+                        }
+
+                        else if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/ActiveElement/PIDCtrl")
+                        {
+                            string temp = x.Attributes["Name"].Value + ",PIDCtrl";
+                            foreach (XmlElement y in x)
+                            {
+                                if (y.Name == "Attribute" && y.Attributes["Name"].Value == "RefID")
+                                {
+                                    temp = temp + "," + y.Value + GetValue(y);
+                                    _activeElements.Add(temp);
+                                }
+                            }
+                        }
+
+                        
+
+                        //MonAnaVlv
+
+                        // service elements
 
                         else if (x.Name == "InternalElement" && ((x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/ServiceElement/ServiceControl")
                             || (x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/ServiceControl")))
@@ -1270,6 +1355,32 @@ namespace MAPol
                         else if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/OperationElement/DIntMan")
                         {
                             string temp = x.Attributes["Name"].Value + ",DIntMan";
+                            foreach (XmlElement y in x)
+                            {
+                                if (y.Name == "Attribute" && y.Attributes["Name"].Value == "RefID")
+                                {
+                                    temp = temp + "," + y.Value + GetValue(y);
+                                    _operationElements.Add(temp);
+                                }
+                            }
+                        }
+
+                        else if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/OperationElement/AnaMan")
+                        {
+                            string temp = x.Attributes["Name"].Value + ",AnaMan";
+                            foreach (XmlElement y in x)
+                            {
+                                if (y.Name == "Attribute" && y.Attributes["Name"].Value == "RefID")
+                                {
+                                    temp = temp + "," + y.Value + GetValue(y);
+                                    _operationElements.Add(temp);
+                                }
+                            }
+                        }
+
+                        else if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/OperationElement/AnaMan/AnaManInt")
+                        {
+                            string temp = x.Attributes["Name"].Value + ",AnaManInt";
                             foreach (XmlElement y in x)
                             {
                                 if (y.Name == "Attribute" && y.Attributes["Name"].Value == "RefID")
@@ -1477,6 +1588,20 @@ namespace MAPol
                 RenderSinkObjects(pictureObject);
                 RenderVendorName2();
             //}
+
+            Form mdiParent = this.Parent?.FindForm();
+
+            if (mdiParent is MdiContainer mainForm)
+            {
+                mainForm.AddMtpError(mtpFileName, mtpErrors);
+            }
+
+
+            /*MdiContainer parent = this.MdiParent as MdiContainer;
+            if(parent != null)
+            {
+                parent.AddMtpError(mtpFileName, mtpErrors);
+            }*/
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -1662,6 +1787,50 @@ namespace MAPol
 
         }
 
+        private void ReadAllOpcUaItemFromManifestFile()
+        {
+
+            XDocument doc = XDocument.Load("Manifest.xml");
+
+            XNamespace ns = "http://www.dke.de/CAEX";
+
+            var opcItems = doc
+                .Descendants(ns + "ExternalInterface")
+                .Where(x => (string)x.Attribute("RefBaseClassPath") ==
+                            "MTPCommunicationICLib/DataItem/OPCUAItem");
+
+            foreach (var item in opcItems)
+            {
+                string name = (string)item.Attribute("Name");
+                string id = (string)item.Attribute("ID");
+
+                string identifier = item
+                    .Elements(ns + "Attribute")
+                    .FirstOrDefault(a => (string)a.Attribute("Name") == "Identifier")
+                    ?.Element(ns + "Value")
+                    ?.Value;
+
+                string nameSpace = item
+                    .Elements(ns + "Attribute")
+                    .FirstOrDefault(a => (string)a.Attribute("Name") == "Namespace")
+                    ?.Element(ns + "Value")
+                    ?.Value;
+
+                string access = item
+                    .Elements(ns + "Attribute")
+                    .FirstOrDefault(a => (string)a.Attribute("Name") == "Access")
+                    ?.Element(ns + "Value")
+                    ?.Value;
+
+                //Console.WriteLine($"Name      : {name}");
+                //Console.WriteLine($"ID        : {id}");
+                //Console.WriteLine($"Identifier: {identifier}");
+                //Console.WriteLine($"Namespace : {nameSpace}");
+                //Console.WriteLine($"Access    : {access}");
+                //Console.WriteLine();
+            }
+        }
+
         enum ConnectionType
         {
             PIPE,
@@ -1706,6 +1875,8 @@ namespace MAPol
             Controls.Add(_labelDisplayName);
         }
 
+        
+
         List<MtpObject> mtpObjects = new List<MtpObject>();
         List<MtpConnectionObject> mtpConnectionObjects = new List<MtpConnectionObject>();
         List<MtpSourceObject> mtpSourceObjects = new List<MtpSourceObject>();
@@ -1744,7 +1915,7 @@ namespace MAPol
         List<GraphicsPath> _graphicsPathsForMeasurementLine = new List<GraphicsPath>();
         List<GraphicsPath> _graphicsPathsForFunctionLine = new List<GraphicsPath>();
         int initialValue = 0;
-        DBHandler dBHandler = new();
+        //DBHandler dBHandler = new();
         bool isOnline = true;
         double scaleFactor = 1.0;
     }

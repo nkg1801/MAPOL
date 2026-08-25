@@ -16,7 +16,8 @@ namespace MAPol
         {
             eClassMapping.Clear();
             XmlDocument doc = new XmlDocument();
-            doc.Load("mapping.xml");
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mapping.xml");
+            doc.Load(path);
             XmlNodeList nodes = doc.ChildNodes;
             foreach (XmlNode node in nodes)
             {

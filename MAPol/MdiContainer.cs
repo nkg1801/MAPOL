@@ -209,7 +209,7 @@ namespace MAPol
             splitContainer1.Panel2.Controls.Add(formProcessDisplay);
             formProcessDisplay.Dock = DockStyle.Left;
             formProcessDisplay.Show();*/
-            
+
         }
 
         private void Form1_Resize(object sender, EventArgs e)
@@ -300,7 +300,7 @@ namespace MAPol
                 form2.FormBorderStyle = FormBorderStyle.None;
                 form2.Show();
             }
-            
+
             //Recipes
             else if (e.Node.Level == 1 && e.Node.Text == "Recipes")
             {
@@ -340,7 +340,7 @@ namespace MAPol
             form2.Show();
         }*/
 
-        
+
         private void openProcessDisplay(TreeNode treeNode)
         {
             FormProcessDisplay1 formProcessDisplay = new FormProcessDisplay1();
@@ -379,6 +379,20 @@ namespace MAPol
 
             // Add to recent files
             //AddRecentFile(key);
+        }
+
+        Dictionary<string, List<string>> MTPErrors = new Dictionary<string, List<string>>();
+
+        public void AddMtpError(string mtpFile, List<string> errorList)
+        {
+            if (!MTPErrors.ContainsKey(mtpFile))
+            {
+                MTPErrors[mtpFile] = errorList;
+            }
+            else
+            {
+                MTPErrors.Add(mtpFile, errorList);
+            }
         }
 
         private void tabControl1_MouseDown(object sender, MouseEventArgs e)
@@ -631,8 +645,11 @@ namespace MAPol
                                     opcUaItems.Add(opcUaItem);
                                 }
                             }
-                            DBHandler dBHandler = new DBHandler();
-                            dBHandler.InsertOpcUaItems(opcUaItems);
+
+                            List<OpcUaItem> temp = opcUaItems;
+                            
+                            //DBHandler dBHandler = new DBHandler();
+                            //dBHandler.InsertOpcUaItems(opcUaItems);
 
                             break;
                         }
@@ -759,6 +776,24 @@ namespace MAPol
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
             //formProcessDisplay.ShowMtpInfo();
+            ShowMtpInfo();
+        }
+
+        public void ShowMtpInfo()
+        {
+            var firstItem = MTPErrors.FirstOrDefault();
+            List<string> errors = firstItem.Value;
+            FormMtpInfo formMtpInfo = new FormMtpInfo();
+            string result = string.Join(Environment.NewLine, errors);
+            string text = "Eclasses used:" + Environment.NewLine + result;
+            formMtpInfo.InfoText = text;
+            formMtpInfo.ShowDialog();
+        }
+
+        private void toolStripButtonErrorList_Click(object sender, EventArgs e)
+        {
+            //OpcUaClientLibrary.OpcUaClient opcUaClient = new OpcUaClientLibrary.OpcUaClient();
+            //opcUaClient.PrintMethods();
         }
     }
 }
