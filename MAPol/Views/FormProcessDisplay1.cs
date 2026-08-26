@@ -199,8 +199,8 @@ namespace MAPol
             pictureBox.Name = mtpObject.RefID;
             ToolTip toolTip = new ToolTip();
             toolTip.Tag = mtpObject.RefID;
-            string toolTipText = makeTooltipText(mtpObject.Name, mtpObject.EClassClassificationClass, mtpObject.X, mtpObject.Y, mtpObject.Width, mtpObject.Height);
-            toolTip.SetToolTip(pictureBox, toolTipText);
+            //string toolTipText = makeTooltipText(mtpObject.Name, mtpObject.EClassClassificationClass, mtpObject.X, mtpObject.Y, mtpObject.Width, mtpObject.Height);
+            //toolTip.SetToolTip(pictureBox, toolTipText);
             Controls.Add(pictureBox);
 
             pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -284,7 +284,7 @@ namespace MAPol
                         case "MonBinDrv":
                             return "Mixer.emf";
 
-                            case "AnaDrv":
+                        case "AnaDrv":
                             return "pump.emf";
 
                         case "MonAnaDrv":
@@ -1479,26 +1479,7 @@ namespace MAPol
             }
         }
 
-        private string makeTooltipText(string name, string eClass, int x, int y, int width, int height)
-        {
-            if (eClass == null || eClass == string.Empty)
-            {
-                return name + ": " + x + ", " + y + "; " + width + "," + height;
-            }
-            else
-            {
-                return name + "(" + eClass + ")" + ": " + x + ", " + y + "; " + width + "," + height;
-            }
-        }
-
-        public void ShowMtpInfo()
-        {
-            FormMtpInfo formMtpInfo = new FormMtpInfo();
-            string result = string.Join(Environment.NewLine, _eClassesUsed);
-            string text = "Eclasses used:" + Environment.NewLine + result;
-            formMtpInfo.InfoText = text;
-            formMtpInfo.ShowDialog();
-        }
+        
 
         private void OpenFile(string filename)
         {
@@ -1527,6 +1508,8 @@ namespace MAPol
                 ZipFile.ExtractToDirectory(filename, extractPath);
                 _amlFileName = extractPath + "\\Manifest.aml";
                 parseDataAssemblyItems();
+                //ParseOpcUaServersFromManifest();
+                //ParseServicesFromManifest();
             }
             imagePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\Shapes\\";
             parseMtpXml2(_amlFileName);
@@ -1875,7 +1858,6 @@ namespace MAPol
             Controls.Add(_labelDisplayName);
         }
 
-        
 
         List<MtpObject> mtpObjects = new List<MtpObject>();
         List<MtpConnectionObject> mtpConnectionObjects = new List<MtpConnectionObject>();
@@ -1918,5 +1900,7 @@ namespace MAPol
         //DBHandler dBHandler = new();
         bool isOnline = true;
         double scaleFactor = 1.0;
+
+       
     }
 }

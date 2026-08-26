@@ -4,12 +4,15 @@ using MAPol.Models;
 using MAPol.Views;
 using System.Collections;
 using System.Diagnostics;
+using System.Drawing.Imaging;
+using System.IO;
 using System.IO.Compression;
 using System.Web;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Xml.Linq;
+using static MAPol.Models.ProcedureInfo;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using System.IO;
 
 namespace MAPol
 {
@@ -560,6 +563,8 @@ namespace MAPol
                 node.ContextMenuStrip = contextMenuStripMtpFile;
 
                 importOpcUaItems(file);
+                ParseServicesFromManifest(file, node);
+                ParseOpcUaServersFromManifest(file, node);
 
                 i++;
             }
@@ -620,6 +625,11 @@ namespace MAPol
                 if (ih.Name == "ModuleTypePackage")
                 {
                     var it = ih.InternalElement[0].InternalElement.FirstOrDefault(ie => ie.Name.Equals("CommunicationSet"));
+                    if (it == null)
+                    {
+                        Trace.WriteLine("CommunicationSet not found in InstanceHierarchy.");
+                        continue;
+                    }
 
                     foreach (InternalElementType iele in it)
                     {
@@ -647,7 +657,7 @@ namespace MAPol
                             }
 
                             List<OpcUaItem> temp = opcUaItems;
-                            
+
                             //DBHandler dBHandler = new DBHandler();
                             //dBHandler.InsertOpcUaItems(opcUaItems);
 
@@ -665,6 +675,99 @@ namespace MAPol
 
                 }
             }
+        }
+
+        private void ParseOpcUaServersFromManifest(string mtpFile, TreeNode treeNode)
+        {
+            string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
+            _opcUaServers.Clear();
+
+            if (string.IsNullOrEmpty(amlFile) || !File.Exists(amlFile))
+            {
+                Trace.WriteLine("ParseOpcUaServersFromManifest: manifest file not found: " + amlFile);
+                return;
+            }
+
+            XDocument doc;
+            try
+            {
+                doc = XDocument.Load(amlFile);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("ParseOpcUaServersFromManifest: error loading manifest: " + ex.Message);
+                return;
+            }
+
+            XNamespace ns = "http://www.dke.de/CAEX";
+
+            // Find the SourceList(s) anywhere in the document
+            var sourceLists = doc.Descendants(ns + "InternalElement")
+                                 .Where(e => ((string)e.Attribute("RefBaseSystemUnitPath")) == "MTPSUCLib/CommunicationSet/SourceList");
+
+            TreeNode opcServerNodes = treeNode.Nodes.Add("OPC UA Servers");
+            
+            foreach (var sourceList in sourceLists)
+            {
+                // OPC UA servers are InternalElement children with this RefBaseSystemUnitPath
+                var serverElements = sourceList.Elements(ns + "InternalElement")
+                                               .Where(s => ((string)s.Attribute("RefBaseSystemUnitPath")) == "MTPCommunicationSUCLib/ServerAssembly/OPCUAServer");
+
+                foreach (var serverElem in serverElements)
+                {
+                    var server = new OpcUaServerInfo
+                    {
+                        Name = (string)serverElem.Attribute("Name") ?? "",
+                        ID = (string)serverElem.Attribute("ID") ?? "",
+                        Description = (string)serverElem.Element(ns + "Description") ?? ""
+                    };
+
+                    TreeNode serverNode = new TreeNode(server.Name) { Tag = server };
+                    opcServerNodes.Nodes.Add(serverNode);
+
+                    // Endpoint attribute (if present)
+                    server.Endpoint = serverElem.Elements(ns + "Attribute")
+                                                .FirstOrDefault(a => (string)a.Attribute("Name") == "Endpoint")
+                                                ?.Element(ns + "Value")?.Value ?? "";
+
+                    // ExternalInterface children that are OPCUA items
+                    var items = serverElem.Elements(ns + "ExternalInterface")
+                                      .Where(x => ((string)x.Attribute("RefBaseClassPath")) == "MTPCommunicationICLib/DataItem/OPCUAItem");
+
+                    TreeNode opcUaItemNodes = serverNode.Nodes.Add("OPC UA Items");
+
+                    foreach (var item in items)
+                    {
+                        var info = new OpcUaItemInfo
+                        {
+                            Name = (string)item.Attribute("Name") ?? "",
+                            ID = (string)item.Attribute("ID") ?? "",
+                            RefBaseClassPath = (string)item.Attribute("RefBaseClassPath") ?? ""
+                        };
+
+                        TreeNode opcUaItem = new TreeNode(info.Name) { Tag = info };
+                        opcUaItemNodes.Nodes.Add(opcUaItem);
+
+                        info.Access = item.Elements(ns + "Attribute")
+                                          .FirstOrDefault(a => (string)a.Attribute("Name") == "Access")
+                                          ?.Element(ns + "Value")?.Value ?? "";
+
+                        info.Identifier = item.Elements(ns + "Attribute")
+                                      .FirstOrDefault(a => (string)a.Attribute("Name") == "Identifier")
+                                      ?.Element(ns + "Value")?.Value ?? "";
+
+                        info.Namespace = item.Elements(ns + "Attribute")
+                                             .FirstOrDefault(a => (string)a.Attribute("Name") == "Namespace")
+                                             ?.Element(ns + "Value")?.Value ?? "";
+
+                        server.Items.Add(info);
+                    }
+
+                    _opcUaServers.Add(server);
+                }
+            }
+
+            Trace.WriteLine($"ParseOpcUaServersFromManifest: parsed {_opcUaServers.Count} OPC UA servers and {_opcUaServers.Sum(s => s.Items.Count)} items.");
         }
 
         private void removeAllMTPsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -794,6 +897,203 @@ namespace MAPol
         {
             //OpcUaClientLibrary.OpcUaClient opcUaClient = new OpcUaClientLibrary.OpcUaClient();
             //opcUaClient.PrintMethods();
+        }
+
+        private void ParseServicesFromManifest(string mtpFile, TreeNode mtpFileNode)
+        {
+            string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
+            if (string.IsNullOrEmpty(amlFile) || !File.Exists(amlFile))
+            {
+                Trace.WriteLine("ParseServicesFromManifest: manifest file not found: " + amlFile);
+                return;
+            }
+
+            XDocument doc;
+            try
+            {
+                doc = XDocument.Load(amlFile);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("ParseServicesFromManifest: error loading manifest: " + ex.Message);
+                return;
+            }
+
+            XNamespace ns = "http://www.dke.de/CAEX";
+
+            var servicesIH = doc.Descendants(ns + "InstanceHierarchy")
+                                .FirstOrDefault(x => string.Equals((string)x.Attribute("Name"), "Services", StringComparison.OrdinalIgnoreCase));
+
+            if (servicesIH == null)
+            {
+                Trace.WriteLine("ParseServicesFromManifest: no InstanceHierarchy with Name='Services' found.");
+                return;
+            }
+
+            _services.Clear();
+
+            // Service nodes have RefBaseSystemUnitPath == "MTPServiceSUCLib/Service"
+            var serviceElements = servicesIH.Elements(ns + "InternalElement")
+                                        .Where(e => (string)e.Attribute("RefBaseSystemUnitPath") == "MTPServiceSUCLib/Service");
+
+            TreeNode servicesNode = new TreeNode("Services");
+
+            if (serviceElements != null)
+            {
+                mtpFileNode.Nodes.Add(servicesNode);
+            }
+
+            foreach (var serviceElem in serviceElements)
+            {
+                var service = new ServiceInfo
+                {
+                    Name = (string)serviceElem.Attribute("Name") ?? "",
+                    Description = (string)serviceElem.Element(ns + "Description") ?? ""
+                };
+
+                TreeNode serviceNode = new TreeNode(service.Name) { Tag = service };
+
+                servicesNode.Nodes.Add(serviceNode);
+
+                service.RefID = serviceElem.Elements(ns + "Attribute")
+                                       .FirstOrDefault(a => (string)a.Attribute("Name") == "RefID")
+                                       ?.Element(ns + "Value")?.Value ?? "";
+
+                // Procedures are InternalElement nodes with RefBaseSystemUnitPath == "MTPServiceSUCLib/Service/Procedure"
+                var procedureElements = serviceElem.Elements(ns + "InternalElement")
+                                                   .Where(pe => (string)pe.Attribute("RefBaseSystemUnitPath") == "MTPServiceSUCLib/Service/Procedure");
+
+                TreeNode proceduresNode = new TreeNode("Procedures");
+                if (procedureElements != null)
+                {
+
+                    serviceNode.Nodes.Add(proceduresNode);
+                }
+
+                foreach (var procElem in procedureElements)
+                {
+                    var proc = new ProcedureInfo
+                    {
+                        Name = (string)procElem.Attribute("Name") ?? "",
+                        Description = (string)procElem.Element(ns + "Description") ?? ""
+                    };
+
+                    
+
+                    proc.RefID = procElem.Elements(ns + "Attribute")
+                                         .FirstOrDefault(a => (string)a.Attribute("Name") == "RefID")
+                                         ?.Element(ns + "Value")?.Value ?? "";
+
+                    var procIdStr = procElem.Elements(ns + "Attribute")
+                                             .FirstOrDefault(a => (string)a.Attribute("Name") == "ProcedureID")
+                                             ?.Element(ns + "Value")?.Value;
+                    if (int.TryParse(procIdStr, out int parsedProcId))
+                    {
+                        proc.ProcedureID = parsedProcId;
+                    }
+
+                    var isSelfStr = procElem.Elements(ns + "Attribute")
+                                             .FirstOrDefault(a => (string)a.Attribute("Name") == "IsSelfCompleting")
+                                             ?.Element(ns + "Value")?.Value;
+                    if (bool.TryParse(isSelfStr, out bool parsedIsSelf))
+                    {
+                        proc.IsSelfCompleting = parsedIsSelf;
+                        
+                    }
+
+                    TreeNode procedureNode = new TreeNode(proc.Name) { Tag = proc };
+                    
+                    if((bool)proc.IsSelfCompleting)
+                    {
+                        procedureNode.ForeColor = Color.Green; // or any color you prefer
+                    }
+                    else
+                    {
+                        procedureNode.ForeColor = Color.Red; // or any color you prefer
+                        procedureNode.ImageIndex = 6;
+                    }
+
+                    proceduresNode.Nodes.Add(procedureNode);
+                    TreeNode parameterNode = procedureNode.Nodes.Add("Parameters");
+                    TreeNode reportValueNode = procedureNode.Nodes.Add("ReportValue");
+                    TreeNode processValueIn = procedureNode.Nodes.Add("ProcessValueIn");
+                    TreeNode processValueOut = procedureNode.Nodes.Add("ProcessValueOut");
+
+                    // collect direct child InternalElement nodes (process values, report values, parameters, etc.)
+                    foreach (var child in procElem.Elements(ns + "InternalElement"))
+                    {
+                        string rb = (string)child.Attribute("RefBaseSystemUnitPath") ?? "";
+                        var elementRef = new ElementRef
+                        {
+                            Name = (string)child.Attribute("Name") ?? "",
+                            RefBaseSystemUnitPath = rb,
+                            RefID = child.Elements(ns + "Attribute")
+                                         .FirstOrDefault(a => (string)a.Attribute("Name") == "RefID")
+                                         ?.Element(ns + "Value")?.Value ?? ""
+                        };
+
+                        if (rb.Contains("ProcessValue/ProcessValueOut", StringComparison.OrdinalIgnoreCase))
+                        {
+                            proc.ProcessValuesOut.Add(elementRef);
+                            processValueOut.Nodes.Add(elementRef.Name);
+                        }
+                        else if (rb.Contains("ProcessValue/ProcessValueIn", StringComparison.OrdinalIgnoreCase))
+                        {
+                            proc.ProcessValuesIn.Add(elementRef);
+                            processValueIn.Nodes.Add(elementRef.Name);
+                        }
+                        else if (rb.IndexOf("ReportValue", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            proc.ReportValues.Add(elementRef);
+                            reportValueNode.Nodes.Add(elementRef.Name);
+                        }
+                        else if (rb.IndexOf("ServiceParameter", StringComparison.OrdinalIgnoreCase) >= 0
+                                 || rb.IndexOf("ProcedureParameter", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            proc.Parameters.Add(elementRef);
+                            parameterNode.Nodes.Add(elementRef.Name);
+                        }
+                        else
+                        {
+                            // other child types can be inspected if needed
+                        }
+                    }
+
+                    service.Procedures.Add(proc);
+                }
+
+                _services.Add(service);
+            }
+
+            Trace.WriteLine($"ParseServicesFromManifest: parsed {_services.Count} services and {_services.Sum(s => s.Procedures.Count)} procedures.");
+        }
+
+        private List<ServiceInfo> _services = new List<ServiceInfo>();
+
+        private void contextMenuStripTopology_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+
+        }
+
+        private List<OpcUaServerInfo> _opcUaServers = new List<OpcUaServerInfo>();
+
+        private class OpcUaServerInfo
+        {
+            public string Name { get; set; } = "";
+            public string ID { get; set; } = "";
+            public string Description { get; set; } = "";
+            public string Endpoint { get; set; } = "";
+            public List<OpcUaItemInfo> Items { get; } = new List<OpcUaItemInfo>();
+        }
+
+        private class OpcUaItemInfo
+        {
+            public string Name { get; set; } = "";
+            public string ID { get; set; } = "";
+            public string RefBaseClassPath { get; set; } = "";
+            public string Access { get; set; } = "";
+            public string Identifier { get; set; } = "";
+            public string Namespace { get; set; } = "";
         }
     }
 }
