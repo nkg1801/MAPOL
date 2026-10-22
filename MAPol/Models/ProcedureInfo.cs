@@ -8,6 +8,7 @@ namespace MAPol.Models
 {
     internal class ProcedureInfo
     {
+        public string Id { get; set; } = "";
         public string Name { get; set; } = "";
         public string RefID { get; set; } = "";
         public string Description { get; set; } = "";
@@ -18,8 +19,11 @@ namespace MAPol.Models
         public List<ElementRef> ReportValues { get; set; } = new List<ElementRef>();
         public List<ElementRef> Parameters { get; set; } = new List<ElementRef>();
 
+        public List<ElementRef> ChildElements { get; } = new List<ElementRef>();
+
         public class ElementRef
         {
+            public string Id { get; set; } = "";
             public string Name { get; set; } = "";
             public string RefID { get; set; } = "";
             public string RefBaseSystemUnitPath { get; set; } = "";

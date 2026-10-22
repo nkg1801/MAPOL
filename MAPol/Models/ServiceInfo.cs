@@ -8,6 +8,7 @@ namespace MAPol.Models
 {
     internal class ServiceInfo
     {
+        public string Id { get; set; } = "";
         public string Name { get; set; } = "";
         public string RefID { get; set; } = "";
         public string Description { get; set; } = "";

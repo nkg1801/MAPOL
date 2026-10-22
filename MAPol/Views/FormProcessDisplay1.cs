@@ -18,6 +18,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using System.Windows.Media;
 using System.Xml;
 using System.Xml.Linq;
@@ -200,7 +201,8 @@ namespace MAPol
             ToolTip toolTip = new ToolTip();
             toolTip.Tag = mtpObject.RefID;
             //string toolTipText = makeTooltipText(mtpObject.Name, mtpObject.EClassClassificationClass, mtpObject.X, mtpObject.Y, mtpObject.Width, mtpObject.Height);
-            //toolTip.SetToolTip(pictureBox, toolTipText);
+            string toolTipText = mtpObject.Name;
+            toolTip.SetToolTip(pictureBox, toolTipText);
             Controls.Add(pictureBox);
 
             pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -231,6 +233,40 @@ namespace MAPol
         }
 
         private string FindReferencedElement(string refId)
+        {
+            var collections = new[]
+            {
+                _indicatorElementList,
+                _activeElementList,
+                _serviceElementList,
+                _inputElementList,
+                _operationElementList,
+                _parameterElementList,
+                _diagnosticElementList
+            };
+
+            foreach (var collection in collections)
+            {
+                ElementInfo matchingElement = collection.FirstOrDefault(x => x.RefId == refId);
+
+                if (matchingElement == null)
+                {
+                    continue;
+                }
+
+                if (SymbolImages.TryGetValue(matchingElement.SymbolName, out string? image))
+                {
+                    return image;
+                }
+
+                _missingSymbols.Add(matchingElement.Name);
+                return "default.png";
+            }
+
+            return string.Empty;
+        }
+
+        private string FindReferencedElementOld(string refId)
         {
             string referencedElement = "";
             foreach (string s in _indicatorElements)
@@ -275,6 +311,9 @@ namespace MAPol
                     string temp = s.Split(',')[1];
                     switch (temp)
                     {
+                        case "BinVlv":
+                            return "BlockValve.emf";
+
                         case "MonBinVlv":
                             return "BlockValve.emf";
 
@@ -367,6 +406,9 @@ namespace MAPol
                         case "AnaMan":
                             return "BlockValve.emf";
 
+                        case "BinManInt":
+                            return "BinaryIndicator.png";
+
                         default:
                             _missingSymbols.Add(s.Split(',')[0]);
                             return "default.png";
@@ -420,6 +462,31 @@ namespace MAPol
             }
 
             return referencedElement;
+        }
+
+        private string FindInCollection(IEnumerable<string> collection)
+        {
+            foreach (string item in collection)
+            {
+                string[] parts = item.Split(',');
+
+                if (parts.Length < 2)
+                {
+                    continue;
+                }
+
+                string symbolType = parts[1];
+
+                if (SymbolImages.TryGetValue(symbolType, out string image))
+                {
+                    return image;
+                }
+
+                _missingSymbols.Add(parts[0]);
+                return "default.png";
+            }
+
+            return null;
         }
 
         private string GetValue(XmlNode xmlNode)
@@ -504,7 +571,7 @@ namespace MAPol
                         {
                             MtpObject mtpObject = new MtpObject();
                             mtpObject.RefBaseSystemUnitPath = attrValue;
-                            mtpObject.Name = node.Attributes["Name"].Value;
+                            mtpObject.Name = node?.Attributes?["Name"]?.Value;
                             foreach (XmlNode loopNodeVar in node.ChildNodes)
                             {
                                 XmlNode node10 = loopNodeVar;
@@ -513,15 +580,15 @@ namespace MAPol
                                     continue;
                                 }
 
-                                if (node10.Attributes["Name"].Value == "RefID")
+                                if (node10?.Attributes?["Name"]?.Value == "RefID")
                                 {
                                     mtpObject.RefID = GetValue(node10);
                                 }
-                                else if (node10.Attributes["Name"].Value == "eClassVersion")
+                                else if (node10?.Attributes?["Name"]?.Value == "eClassVersion")
                                 {
                                     mtpObject.EClassVersion = GetValue(node10);
                                 }
-                                else if (node10.Attributes["Name"].Value == "eClassClassificationClass")
+                                else if (node10?.Attributes?["Name"]?.Value == "eClassClassificationClass")
                                 {
                                     string tempValue = GetValue(node10);
                                     if (tempValue == null || tempValue.Trim() == string.Empty)
@@ -544,7 +611,7 @@ namespace MAPol
                                     }
                                 }
 
-                                else if (node10.Attributes["Name"].Value == "Width")
+                                else if (node10.Attributes["Name"]?.Value == "Width")
                                 {
                                     string tempValue = GetValue(node10);
                                     if (tempValue != string.Empty)
@@ -553,7 +620,7 @@ namespace MAPol
                                     }
                                 }
 
-                                else if (node10.Attributes["Name"].Value == "Height")
+                                else if (node10.Attributes["Name"]?.Value == "Height")
                                 {
                                     string tempValue = GetValue(node10);
                                     if (tempValue != string.Empty)
@@ -561,7 +628,7 @@ namespace MAPol
                                         mtpObject.Height = int.Parse(tempValue);
                                     }
                                 }
-                                else if (node10.Attributes["Name"].Value == "X")
+                                else if (node10.Attributes["Name"]?.Value == "X")
                                 {
                                     string tempValue = GetValue(node10);
                                     if (tempValue != string.Empty)
@@ -910,13 +977,13 @@ namespace MAPol
 
         private List<XmlNode> GetPictureNodes(string fileName)
         {
-            XmlDocument doc = new XmlDocument();
-            doc.Load(fileName);
+            //XmlDocument _xmlDocument = new XmlDocument();
+            //_xmlDocument.Load(fileName);
 
             List<XmlNode> found = new List<XmlNode>();
             XmlNode caexNode = null;
 
-            foreach (XmlNode n in doc.ChildNodes)
+            foreach (XmlNode n in _xmlDocument.ChildNodes)
             {
                 if (string.Equals(n.Name, "CAEXFile", StringComparison.OrdinalIgnoreCase))
                 {
@@ -926,7 +993,7 @@ namespace MAPol
                 }
             }
 
-            XmlNodeList caexChilds = caexNode?.ChildNodes ?? doc.ChildNodes;
+            XmlNodeList caexChilds = caexNode?.ChildNodes ?? _xmlDocument.ChildNodes;
 
             foreach (XmlNode xmlNode in caexChilds)
             {
@@ -951,9 +1018,16 @@ namespace MAPol
                                     if (y.Name == "InternalElement")
                                     {
                                         var x1 = y.Attributes?["RefBaseSystemUnitPath"];
+                                        
+                                        // for MTP 1.0 and 1.1
                                         if (x1 != null && x1.Value == "MTPSUCLib/CommunicationSet")
                                         {
                                             _communicationSetNode = y;
+                                        }
+                                        // for MTP 2.0
+                                        else if (x1 != null && x1.Value == "MTPDataAssemblySUCLib/DataAssemblySet")
+                                        {
+                                            _dataAssemblySetNode.Add(y);
                                         }
                                     }
                                 }
@@ -1093,8 +1167,115 @@ namespace MAPol
             return mtpObjects;
         }
 
+        private void ParseDataAssemblySetNode(String fileName)
+        {
+            //XmlDocument _xmlDocument = new XmlDocument();
+            //_xmlDocument.Load(fileName);
+
+            XmlNode dataAssemblySetNode = _dataAssemblySetNode.First();
+
+            var ns = new XmlNamespaceManager(_xmlDocument.NameTable);
+            ns.AddNamespace("caex", "http://www.dke.de/CAEX");
+
+            string aspectRef = dataAssemblySetNode.SelectSingleNode(".//caex:ExternalInterface[@Name='AspectRef']/" + "caex:Attribute[@Name='AspectRef']/" + "caex:Value", ns)?.InnerText;
+
+            if (!string.IsNullOrEmpty(aspectRef))
+            {
+                XmlNode instanceHierarchy = _xmlDocument.SelectSingleNode($"//caex:InstanceHierarchy[@ID='{aspectRef}']",ns);
+
+                if (instanceHierarchy != null)
+                {
+                    XmlNodeList internalElements = instanceHierarchy?.SelectNodes("./caex:InternalElement", ns);
+
+                    foreach (XmlNode internalElement in internalElements)
+                    {
+                        string name = internalElement.Attributes["Name"]?.Value;
+                        string id = internalElement.Attributes["ID"]?.Value;
+
+                        string path = internalElement.Attributes["RefBaseSystemUnitPath"]?.Value;
+
+                        if (path.Contains("/IndicatorElement/"))
+                        {
+                            AddElement(internalElement, _indicatorElementList);
+                        }
+                        else if (path.Contains("/ActiveElement/"))
+                        {
+                            AddElement(internalElement, _activeElementList);
+                        }
+                        else if (path.Contains("/OperationElement/"))
+                        {
+                            AddElement(internalElement, _operationElementList);
+                        }
+                        else if (path.Contains("/ServiceElement/ParameterElement/"))
+                        {
+                            AddElement(internalElement, _parameterElementList);
+                        }
+
+                        else if (path.Contains("/InputElement/"))
+                        {
+                            AddElement(internalElement, _inputElementList);
+                        }
+
+                        else if (path.Contains("/ServiceElement/"))
+                        {
+                            AddElement(internalElement, _serviceElementList);
+                        }
+
+                        else if (path.Contains("/DiagnosticElement/"))
+                        {
+                            AddElement(internalElement, _diagnosticElementList);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void AddElementOld(XmlNode internalElement, ICollection<string> targetCollection)
+        {
+            string path = internalElement.Attributes["RefBaseSystemUnitPath"]?.Value;
+            string symbolName = path?.Split('/').Last();
+
+            XmlElement refIdAttribute = internalElement.ChildNodes.OfType<XmlElement>().FirstOrDefault(x => x.Name == "Attribute" && x.Attributes["Name"]?.Value == "RefID");
+
+            if (refIdAttribute == null)
+            {
+                return;
+            }
+
+            string value = $"{internalElement.Attributes["Name"]?.Value}," + $"{symbolName}," + $"{refIdAttribute.Value}{GetValue(refIdAttribute)}";
+            targetCollection.Add(value);
+        }
+
+        private void AddElement(XmlNode internalElement, ICollection<ElementInfo> targetCollection)
+        {
+            string path = internalElement.Attributes["RefBaseSystemUnitPath"]?.Value;
+            string symbolName = path?.Split('/').Last();
+
+            XmlElement refIdAttribute = internalElement.ChildNodes.OfType<XmlElement>().FirstOrDefault(x => x.Name == "Attribute" && x.Attributes["Name"]?.Value == "RefID");
+
+            if (refIdAttribute == null)
+            {
+                return;
+            }
+
+            var elementInfo = new ElementInfo
+            {
+                Name = internalElement.Attributes["Name"]?.Value,
+                SymbolName = symbolName,
+                RefId = GetValue(refIdAttribute),
+                Value = refIdAttribute.Value
+            };
+
+            targetCollection.Add(elementInfo);
+        }
+
         private void ParseCommunicationSetNode()
         {
+            if (_communicationSetNode == null)
+            {
+                return;
+            }
+
             foreach (XmlElement xmlNode in _communicationSetNode)
             {
                 if (xmlNode.Name == "RoleRequirements")
@@ -1109,6 +1290,77 @@ namespace MAPol
                         {
                             continue;
                         }
+
+                        string path = x.Attributes["RefBaseSystemUnitPath"]?.Value;
+
+                        if (path.Contains("/IndicatorElement/"))
+                        {
+                            AddElement(x, _indicatorElementList);
+                        }
+
+                        else if (path.Contains("/ActiveElement/"))
+                        {
+                            AddElement(x, _activeElementList);
+                        }
+
+                        else if (path.Contains("/ServiceElement/ParameterElement/"))
+                        {
+                            AddElement(x, _parameterElementList);
+                        }
+
+                        else if (path.Contains("/ServiceElement/"))
+                        {
+                            AddElement(x, _serviceElementList);
+                        }
+
+                        else if (path.Contains("/InputElement/"))
+                        {
+                            AddElement(x, _inputElementList);
+                        }
+
+                        else if (path.Contains("/OperationElement/"))
+                        {
+                            AddElement(x, _operationElementList);
+                        }
+
+                        else if (path.Contains("/DiagnosticElement/"))
+                        {
+                            AddElement(x, _diagnosticElementList);
+                        }
+
+                        else if (path.Contains("/ServiceControl"))
+                        {
+                            AddElement(x, _serviceElementList);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ParseCommunicationSetNodeOld()
+        {
+            if(_communicationSetNode == null)
+            {
+                return;
+            }   
+
+            foreach (XmlElement xmlNode in _communicationSetNode)
+            {
+                if (xmlNode.Name == "RoleRequirements")
+                {
+                    continue;
+                }
+                if (xmlNode.Name == "InternalElement" && xmlNode.Attributes["RefBaseSystemUnitPath"].Value == "MTPSUCLib/CommunicationSet/InstanceList")
+                {
+                    foreach (XmlElement x in xmlNode.ChildNodes)
+                    {
+                        if (x.Name == "RoleRequirements")
+                        {
+                            continue;
+                        }
+
+                        string path = x.Attributes["RefBaseSystemUnitPath"]?.Value;
+
                         if (x.Name == "InternalElement" && x.Attributes["RefBaseSystemUnitPath"].Value == "MTPDataObjectSUCLib/DataAssembly/IndicatorElement/AnaView")
                         {
                             string temp = x.Attributes["Name"].Value + ",AnaView";
@@ -1118,6 +1370,7 @@ namespace MAPol
                                 {
                                     temp = temp + "," + y.Value + GetValue(y);
                                     _indicatorElements.Add(temp);
+                                    //_indicatorElementList.Add(temp);
                                 }
                             }
                         }
@@ -1272,7 +1525,6 @@ namespace MAPol
                             }
                         }
 
-                        
 
                         //MonAnaVlv
 
@@ -1479,8 +1731,6 @@ namespace MAPol
             }
         }
 
-        
-
         private void OpenFile(string filename)
         {
             int index = filename.LastIndexOf('\\');
@@ -1507,15 +1757,42 @@ namespace MAPol
 
                 ZipFile.ExtractToDirectory(filename, extractPath);
                 _amlFileName = extractPath + "\\Manifest.aml";
-                parseDataAssemblyItems();
-                //ParseOpcUaServersFromManifest();
-                //ParseServicesFromManifest();
+                
             }
+
+            _xmlDocument = new XmlDocument();
+            _xmlDocument.Load(_amlFileName);
+
+            GetMtpVersion(_amlFileName);
+
             imagePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\Shapes\\";
             parseMtpXml2(_amlFileName);
-            ParseCommunicationSetNode();
+
+            if (_mtpVersion == 1)
+            {
+                parseDataAssemblyItems();
+                ParseCommunicationSetNode();
+            }
+            else
+            {
+                ParseDataAssemblySetNode(_amlFileName);
+            }
+
             RenderGraphic2();
             //toolStripButton5.Enabled = true;
+        }
+
+        private void GetMtpVersion(String fileName)
+        {
+            //XmlDocument xmlDocument = new XmlDocument();
+            //xmlDocument.Load(fileName);
+
+            string version = _xmlDocument.SelectSingleNode("//*[local-name()='Document']")?.Attributes["Version"]?.Value;
+
+            if (version != null)
+            {
+                _mtpVersion = int.Parse(version.Split('.')[0]);
+            }
         }
 
         private void parseDataAssemblyItems()
@@ -1526,28 +1803,35 @@ namespace MAPol
                 if (ih.Name == "ModuleTypePackage")
                 {
                     var it = ih.InternalElement[0].InternalElement.FirstOrDefault(ie => ie.RefBaseSystemUnitPath.Equals("MTPSUCLib/CommunicationSet"));
-                    foreach (InternalElementType iele in it)
+                    if (it != null)
                     {
-                        if (iele.Name == "InstanceList")
+                        foreach (InternalElementType iele in it)
                         {
-                            foreach (InternalElementType temp1 in iele.InternalElement)
+                            if (iele.Name == "InstanceList")
                             {
-                                if (temp1.Attribute["V"] != null) // for AnaMon etc
+                                foreach (InternalElementType temp1 in iele.InternalElement)
                                 {
-                                    string refId = temp1.Attribute["RefID"].Value;
-                                    string valueAttribute = temp1.Attribute["V"].Value!;
-                                    dataAssemblyDictionary.Add(refId, valueAttribute);
+                                    if (temp1.Attribute["V"] != null) // for AnaMon etc
+                                    {
+                                        string refId = temp1.Attribute["RefID"].Value;
+                                        string valueAttribute = temp1.Attribute["V"].Value!;
+                                        dataAssemblyDictionary.Add(refId, valueAttribute);
+                                    }
+                                    else if (temp1.Attribute["Pos"] != null) // Control Valves
+                                    {
+                                        string refId = temp1.Attribute["RefID"].Value;
+                                        string valueAttribute = temp1.Attribute["Pos"].Value!;
+                                        dataAssemblyDictionary.Add(refId, valueAttribute);
+                                    }
                                 }
-                                else if (temp1.Attribute["Pos"] != null) // Control Valves
-                                {
-                                    string refId = temp1.Attribute["RefID"].Value;
-                                    string valueAttribute = temp1.Attribute["Pos"].Value!;
-                                    dataAssemblyDictionary.Add(refId, valueAttribute);
-                                }
-                            }
 
-                            break;
+                                break;
+                            }
                         }
+                    }
+                    else
+                    {
+                        mtpErrors.Add("MTP ERROR -> CommunicationSet not found in the MTP file.");
                     }
                     break;
                 }
@@ -1859,6 +2143,9 @@ namespace MAPol
         }
 
 
+
+        XmlDocument _xmlDocument;
+
         List<MtpObject> mtpObjects = new List<MtpObject>();
         List<MtpConnectionObject> mtpConnectionObjects = new List<MtpConnectionObject>();
         List<MtpSourceObject> mtpSourceObjects = new List<MtpSourceObject>();
@@ -1868,7 +2155,8 @@ namespace MAPol
         List<MtpSinkObject> mtpTerminationObjects = new List<MtpSinkObject>();
         List<PictureObject> mtpPictureObjects = new List<PictureObject>();
         List<XmlNode> pictureNodes = new List<XmlNode>();
-        XmlNode _communicationSetNode;
+        XmlNode _communicationSetNode; // used in MTP 1.0 and MTP 1.1
+        List<XmlNode> _dataAssemblySetNode = new List<XmlNode>(); // used in MTP 2.0
 
         string imagePath = "";
 
@@ -1890,6 +2178,15 @@ namespace MAPol
         List<string> _serviceElements = new List<string>();
         List<string> _parameterElements = new List<string>();
         List<string> _diagnosticElements = new List<string>();
+
+        private readonly List<ElementInfo> _indicatorElementList = new();
+        private readonly List<ElementInfo> _activeElementList = new();
+        private readonly List<ElementInfo> _parameterElementList = new();
+        private readonly List<ElementInfo> _operationElementList = new();
+        private readonly List<ElementInfo> _inputElementList = new();
+        private readonly List<ElementInfo> _serviceElementList = new();
+        private readonly List<ElementInfo> _diagnosticElementList = new();
+
         private Bitmap MyImage;
         public string mtpFileName;
         Dictionary<string, string> dataAssemblyDictionary = new Dictionary<string, string>();
@@ -1900,7 +2197,58 @@ namespace MAPol
         //DBHandler dBHandler = new();
         bool isOnline = true;
         double scaleFactor = 1.0;
+        int _mtpVersion = 0;
 
-       
+
+        private static readonly Dictionary<string, string> SymbolImages = new()
+        {
+        // Indicators
+        ["AnaView"] = "27209090.png",
+        ["BinView"] = "BinaryIndicator.png",
+        ["BinMon"] = "BinaryIndicator.png",
+        ["AnaMon"] = "AnalogIndicator.emf",
+        ["DIntView"] = "ArithmeticOperator.emf",
+        ["DIntMon"] = "ArithmeticOperator.emf",
+        ["StringView"] = "BinaryIndicator.png",
+
+        // Active
+        ["BinVlv"] = "BlockValve.emf",
+        ["MonBinVlv"] = "BlockValve.emf",
+        ["AnaVlv"] = "BlockValve.emf",
+        ["MonAnaVlv"] = "BlockValve.emf",
+        ["MonBinDrv"] = "Mixer.emf",
+        ["AnaDrv"] = "pump.emf",
+        ["MonAnaDrv"] = "pump.emf",
+        ["PIDCtrl"] = "pidctrl.png",
+
+        // Service
+        ["ServiceControl"] = "ServiceControl",
+
+        // Operation
+        ["DIntManInt"] = "BlockValve.emf",
+        ["DIntMan"] = "BlockValve.emf",
+        ["AnaManInt"] = "BlockValve.emf",
+        ["AnaMan"] = "BlockValve.emf",
+        ["BinManInt"] = "BinaryIndicator.png",
+
+        // Parameters
+        ["DIntServParam"] = "BlockValve.emf",
+        ["BinServParam"] = "BlockValve.emf",
+        ["AnaServParam"] = "BlockValve.emf",
+        ["StringServParam"] = "BlockValve.emf",
+
+        // Diagnostics
+        ["LockView4"] = "InterlockView.emf",
+        ["LockView8"] = "InterlockView.emf",
+        ["LockView16"] = "InterlockView.emf",
+
+        // Inputs
+        ["BinProcessValueIn"] = "BlockValve.emf",
+        ["AnaProcessValueIn"] = "BlockValve.emf",
+        ["DIntProcessValueIn"] = "BlockValve.emf",
+        ["StringProcessValueIn"] = "BlockValve.emf"
+    };
+
+
     }
 }

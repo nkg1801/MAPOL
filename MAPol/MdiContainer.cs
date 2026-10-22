@@ -2,6 +2,7 @@ using Aml.Engine.Adapter;
 using Aml.Engine.CAEX;
 using MAPol.Models;
 using MAPol.Views;
+using Opc.Ua;
 using System.Collections;
 using System.Diagnostics;
 using System.Drawing.Imaging;
@@ -26,7 +27,7 @@ namespace MAPol
         public MdiContainer()
         {
             InitializeComponent();
-            LoadRecentFiles();
+            //LoadRecentFiles();
             //tabControl1.SizeMode = TabSizeMode.Normal;
             //tabControl1.ItemSize = new Size(200, 25); // Width, Height
 
@@ -47,13 +48,27 @@ namespace MAPol
         {
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
             treeViewProject.ExpandAll();
             File.Delete("MAPOC.sqlite");
 
             // Initialize Recent Files menu item under the same parent as openAllProcessDisplaysToolStripMenuItem
             RefreshRecentFilesMenu(); // populate (empty at start)
+            LoadRecentFiles(); // load from file
+
+            //try
+            //{
+            //await Task.Run(() =>
+                //{
+                    importMtpFiles();
+               // });
+            //}
+            //finally
+            //{
+                //progressBar1.Visible = false;
+                groupBox1.Visible = false;
+            //}
         }
 
         /// <summary>
@@ -195,6 +210,16 @@ namespace MAPol
             recentMTPFilesToolStripMenuItem.DropDownItems.Add(clearItem);
         }
 
+        private void importMtpFiles()
+        {
+            string[] fileList = new string[_recentFiles.Count];
+            for (int i = 0; i < _recentFiles.Count; i++)
+            {
+                fileList[i] = _recentFiles[i];
+            }
+            ImportMtpFile(fileList);
+        }
+
         private void toolStripLabel1_Click(object sender, EventArgs e)
         {
             FormProcessDisplay1 form2 = new FormProcessDisplay1();
@@ -243,40 +268,13 @@ namespace MAPol
                     string[] fileNames = openFileDialog1.SafeFileNames;
                     string[] fileNamesWithPath = openFileDialog1.FileNames;
                     int i = 0;
-                    foreach (string fileName in fileNames)
-                    {
-                        TreeNode node = new TreeNode(Path.GetFileNameWithoutExtension(fileName));
-                        node.ImageIndex = 0;
-                        node.SelectedImageIndex = 0;
-                        node.Tag = fileNamesWithPath[i];
-                        mtpNode.Nodes.Add(node);
-                        node.ContextMenuStrip = contextMenuStripMtpFile;
-
-
-                        // Add imported file to recent files
-                        try
-                        {
-                            AddRecentFile(fileNamesWithPath[i]);
-                        }
-                        catch { }
-
-                        i++;
-                    }
-
-                    mtpNode.Expand();
+                    ImportMtpFiles(fileNamesWithPath);
                 }
             }
             else
             {
-                foreach (string s in fileToImport)
-                {
-                    TreeNode node = new TreeNode(Path.GetFileNameWithoutExtension(s));
-                    node.ImageIndex = 0;
-                    node.SelectedImageIndex = 0;
-                    node.Tag = s;
-                    mtpNode.Nodes.Add(node);
-                    node.ContextMenuStrip = contextMenuStripMtpFile;
-                }
+
+                ImportMtpFiles(fileToImport);
             }
 
             mtpNode.Expand();
@@ -550,6 +548,11 @@ namespace MAPol
         private void treeViewProject_DragDrop(object sender, DragEventArgs e)
         {
             string[] files = e.Data.GetData(DataFormats.FileDrop) as string[];
+            ImportMtpFiles(files);
+        }
+
+        private void ImportMtpFiles(string[] files)
+        {
             List<string> fileList = GetAllDroppedMtpFiles(files);
             int i = 0;
             TreeNode mtpNode = treeViewProject.Nodes[0].Nodes[0];
@@ -564,6 +567,8 @@ namespace MAPol
 
                 importOpcUaItems(file);
                 ParseServicesFromManifest(file, node);
+                ParseLinkedServiceSetsFromManifest(file);
+                ParseProcessValueSetFromManifest(file, node);
                 ParseOpcUaServersFromManifest(file, node);
 
                 i++;
@@ -576,6 +581,16 @@ namespace MAPol
             List<string> mtpFiles = new List<string>();
             foreach (string path in files)
             {
+                if(File.Exists(path) || Directory.Exists(path))
+                {
+                    // Valid path
+                }
+                else
+                {
+                    Trace.WriteLine("Invalid path: " + path);
+                    continue;
+                }
+
                 FileAttributes attributes = File.GetAttributes(path);
 
                 if ((attributes & FileAttributes.Directory) == FileAttributes.Directory)
@@ -809,7 +824,7 @@ namespace MAPol
 
         private void openManifestXMLToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string extractPath = UnpackMtpPackage(treeViewProject.SelectedNode.Tag.ToString());
+            /*string extractPath = UnpackMtpPackage(treeViewProject.SelectedNode.Tag.ToString());
 
             string temp = "\"" + extractPath + "\\Manifest.aml" + "\"";
             try
@@ -824,7 +839,18 @@ namespace MAPol
             catch (Exception ex)
             {
                 Process.Start("notepad.exe", temp);
-            }
+            }*/
+
+            OpenManifestFile();
+        }
+
+        private void OpenManifestFile()
+        {
+            string extractPath = UnpackMtpPackage(treeViewProject.SelectedNode.Tag.ToString());
+
+            string temp = "\"" + extractPath + "\\Manifest.aml" + "\"";
+            string filePath = extractPath + "\\Manifest.aml";
+            OpenXmlEditor(filePath);
         }
 
         private void treeViewProject_ItemDrag(object sender, ItemDragEventArgs e)
@@ -879,7 +905,33 @@ namespace MAPol
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
             //formProcessDisplay.ShowMtpInfo();
-            ShowMtpInfo();
+            //ShowMtpInfo();
+
+            //OpenXmlEditor();
+        }
+
+        private void OpenXmlEditor(string filePath)
+        {
+            XmlEditor xmlEditor = new XmlEditor();
+            xmlEditor.ManifestFile = filePath;
+
+            TabPage tabPage = new TabPage
+            {
+                Name = "xmleditor",             // Unique identifier
+                Text = "XML Editor"
+            };
+
+            xmlEditor.MdiParent = this;
+            xmlEditor.TopLevel = false;
+
+            //TabPage tabPage = new TabPage();
+            //tabPage.Text = "XML Editor";
+            tabControl1.TabPages.Add(tabPage);
+            tabPage.Controls.Add(xmlEditor);
+            tabControl1.SelectedTab = tabPage;
+            xmlEditor.Dock = DockStyle.Fill;
+            xmlEditor.FormBorderStyle = FormBorderStyle.None;
+            xmlEditor.Show();
         }
 
         public void ShowMtpInfo()
@@ -897,6 +949,114 @@ namespace MAPol
         {
             //OpcUaClientLibrary.OpcUaClient opcUaClient = new OpcUaClientLibrary.OpcUaClient();
             //opcUaClient.PrintMethods();
+            ShowMtpInfo();
+        }
+
+        List<ProcessValueOutInfo> _processValueOutInfos = new List<ProcessValueOutInfo>();
+        private void ParseProcessValueSetFromManifest(string mtpFile, TreeNode mtpFileNode)
+        {
+            string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
+            if (string.IsNullOrEmpty(amlFile) || !File.Exists(amlFile))
+            {
+                Trace.WriteLine("ParseServicesFromManifest: manifest file not found: " + amlFile);
+                return;
+            }
+
+            XDocument doc;
+            try
+            {
+                doc = XDocument.Load(amlFile);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("ParseServicesFromManifest: error loading manifest: " + ex.Message);
+                return;
+            }
+
+            TreeNode processValuesNode = new TreeNode("Process Values");
+            TreeNode processValuesOutNode = new TreeNode("Outs");
+            TreeNode processValuesInNode = new TreeNode("Ins");
+
+            processValuesNode.Nodes.Add(processValuesOutNode);
+            processValuesNode.Nodes.Add(processValuesInNode);
+
+            mtpFileNode.Nodes.Add(processValuesNode);
+
+            XNamespace ns = "http://www.dke.de/CAEX";
+
+            var processValuesIH = doc.Descendants(ns + "InstanceHierarchy").
+                FirstOrDefault(x => string.Equals((string)x.Attribute("Name"), "ProcessValues", StringComparison.OrdinalIgnoreCase));
+
+            if (processValuesIH != null)
+            {
+                Trace.WriteLine("ParseServicesFromManifest: no InstanceHierarchy with Name='Services' found.");
+
+                _processValueOutInfos.Clear();
+
+                // Service nodes have RefBaseSystemUnitPath == "MTPServiceSUCLib/Service"
+                //var processValueOut = processValuesIH.Elements(ns + "InternalElement").Where(e => (string)e.Attribute("RefBaseSystemUnitPath") == "MTPProcessValueSUCLib/ProcessValue/ProcessValueOut");
+
+                var processValueOutElements = processValuesIH.Elements(ns + "InternalElement").Where(e => (string)e.Attribute("RefBaseSystemUnitPath") == "MTPProcessValueSUCLib/ProcessValue/ProcessValueOut");
+                var processValueInElements = processValuesIH.Elements(ns + "InternalElement").Where(e => (string)e.Attribute("RefBaseSystemUnitPath") == "MTPProcessValueSUCLib/ProcessValue/ProcessValueIn");
+
+                if (processValueOutElements != null)
+                {
+                    foreach (var serviceElem in processValueOutElements)
+                    {
+                        string name = (string)serviceElem.Attribute("Name") ?? "";
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            processValuesOutNode.Nodes.Add(name);
+                        }
+                    }
+                }
+
+                if (processValueInElements != null)
+                {
+                    foreach (var serviceElem in processValueInElements)
+                    {
+                        string name = (string)serviceElem.Attribute("Name") ?? "";
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            processValuesInNode.Nodes.Add(name);
+                        }
+                    }
+                }
+            }
+
+            var processValueSetIH = doc.Descendants(ns + "InstanceHierarchy").FirstOrDefault(x => string.Equals((string)x.Attribute("Name"), "ProcessValueSet", StringComparison.OrdinalIgnoreCase));
+            if (processValueSetIH == null)
+            {
+                return;
+            }
+
+            var processValueSetInternalElementsOut = processValueSetIH.Elements(ns + "InternalElement").Where(e => (string)e.Attribute("RefBaseSystemUnitPath") == "MTPProcessValueSUCLib/ProcessValue/ProcessValueOut");
+            var processValueSetInternalElementsIn = processValueSetIH.Elements(ns + "InternalElement").Where(e => (string)e.Attribute("RefBaseSystemUnitPath") == "MTPProcessValueSUCLib/ProcessValue/ProcessValueIn");
+
+            if (processValueSetInternalElementsOut != null)
+            {
+                foreach (var serviceElem in processValueSetInternalElementsOut)
+                {
+                    string name = (string)serviceElem.Attribute("Name") ?? "";
+                    if (!string.IsNullOrEmpty(name))
+                    {
+                        processValuesOutNode.Nodes.Add(name);
+                    }
+                }
+            }
+
+            if (processValueSetInternalElementsIn != null)
+            {
+                foreach (var serviceElem in processValueSetInternalElementsIn)
+                {
+                    string name = (string)serviceElem.Attribute("Name") ?? "";
+                    if (!string.IsNullOrEmpty(name))
+                    {
+                        processValuesInNode.Nodes.Add(name);
+                    }
+                }
+            }
+
         }
 
         private void ParseServicesFromManifest(string mtpFile, TreeNode mtpFileNode)
@@ -933,8 +1093,7 @@ namespace MAPol
             _services.Clear();
 
             // Service nodes have RefBaseSystemUnitPath == "MTPServiceSUCLib/Service"
-            var serviceElements = servicesIH.Elements(ns + "InternalElement")
-                                        .Where(e => (string)e.Attribute("RefBaseSystemUnitPath") == "MTPServiceSUCLib/Service");
+            var serviceElements = servicesIH.Elements(ns + "InternalElement").Where(e => (string)e.Attribute("RefBaseSystemUnitPath") == "MTPServiceSUCLib/Service");
 
             TreeNode servicesNode = new TreeNode("Services");
 
@@ -1066,6 +1225,134 @@ namespace MAPol
             }
 
             Trace.WriteLine($"ParseServicesFromManifest: parsed {_services.Count} services and {_services.Sum(s => s.Procedures.Count)} procedures.");
+        }
+
+        // --- Add this parser method near other XDocument parsing helpers (e.g. next to ReadAllOpcUaItemFromManifestFile) ---
+        private List<ServiceInfo> _linkedServices = new List<ServiceInfo>();
+        private void ParseLinkedServiceSetsFromManifest(string mtpFile)
+        {
+            _linkedServices.Clear();
+
+            string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
+            if (string.IsNullOrEmpty(amlFile) || !File.Exists(amlFile))
+            {
+                Trace.WriteLine("ParseServicesFromManifest: manifest file not found: " + amlFile);
+                return;
+            }
+
+            XDocument doc;
+            try
+            {
+                doc = XDocument.Load(amlFile);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("ParseLinkedServiceSetsFromManifest: error loading manifest: " + ex.Message);
+                return;
+            }
+
+            XNamespace ns = "http://www.dke.de/CAEX";
+
+            // Find all ServiceSet InternalElement nodes
+            var serviceSetElements = doc.Descendants(ns + "InternalElement")
+                .Where(e => (string?)e.Attribute("RefBaseSystemUnitPath") == "MTPServiceSUCLib/ServiceSet");
+
+            foreach (var serviceSet in serviceSetElements)
+            {
+                // find ExternalInterface with AspectRef attribute
+                var aspectExt = serviceSet.Elements(ns + "ExternalInterface")
+                    .FirstOrDefault(x => ((string?)x.Attribute("RefBaseClassPath"))?.IndexOf("AspectSetReference", StringComparison.OrdinalIgnoreCase) >= 0
+                                         || (string?)x.Attribute("RefBaseClassPath") == "MTPICLib/AspectSetReference");
+
+                if (aspectExt == null)
+                    continue;
+
+                var aspectRef = aspectExt.Elements(ns + "Attribute")
+                    .FirstOrDefault(a => (string?)a.Attribute("Name") == "AspectRef")
+                    ?.Element(ns + "Value")?.Value;
+
+                if (string.IsNullOrWhiteSpace(aspectRef))
+                    continue;
+
+                // find the InstanceHierarchy with matching ID (the linked aspect)
+                var linkedIH = doc.Descendants(ns + "InstanceHierarchy")
+                                  .FirstOrDefault(i => ((string?)i.Attribute("ID")) == aspectRef);
+
+                if (linkedIH == null)
+                {
+                    Trace.WriteLine($"ParseLinkedServiceSetsFromManifest: no InstanceHierarchy found for AspectRef '{aspectRef}'");
+                    continue;
+                }
+
+                // services in the linked InstanceHierarchy
+                var serviceElems = linkedIH.Elements(ns + "InternalElement")
+                                           .Where(s => (string?)s.Attribute("RefBaseSystemUnitPath") == "MTPServiceSUCLib/Service");
+
+                foreach (var svc in serviceElems)
+                {
+                    var service = new ServiceInfo
+                    {
+                        Name = (string?)svc.Attribute("Name") ?? "",
+                        Id = (string?)svc.Attribute("ID") ?? "",
+                        Description = svc.Element(ns + "Description")?.Value ?? ""
+                    };
+
+                    service.RefID = svc.Elements(ns + "Attribute")
+                                       .FirstOrDefault(a => (string?)a.Attribute("Name") == "RefID")
+                                       ?.Element(ns + "Value")?.Value ?? "";
+
+                    // find procedures under this service
+                    var procedureElements = svc.Elements(ns + "InternalElement")
+                                               .Where(p => (string?)p.Attribute("RefBaseSystemUnitPath") == "MTPServiceSUCLib/Service/Procedure");
+
+                    foreach (var proc in procedureElements)
+                    {
+                        var procedure = new ProcedureInfo
+                        {
+                            Name = (string?)proc.Attribute("Name") ?? "",
+                            Id = (string?)proc.Attribute("ID") ?? "",
+                            Description = proc.Element(ns + "Description")?.Value ?? ""
+                        };
+
+                        procedure.RefID = proc.Elements(ns + "Attribute")
+                                              .FirstOrDefault(a => (string?)a.Attribute("Name") == "RefID")
+                                              ?.Element(ns + "Value")?.Value ?? "";
+
+                        var procIdStr = proc.Elements(ns + "Attribute")
+                                             .FirstOrDefault(a => (string?)a.Attribute("Name") == "ProcedureID")
+                                             ?.Element(ns + "Value")?.Value;
+                        if (int.TryParse(procIdStr, out int parsedProcId))
+                            procedure.ProcedureID = parsedProcId;
+
+                        var isSelfStr = proc.Elements(ns + "Attribute")
+                                             .FirstOrDefault(a => (string?)a.Attribute("Name") == "IsSelfCompleting")
+                                             ?.Element(ns + "Value")?.Value;
+                        if (bool.TryParse(isSelfStr, out bool parsedIsSelf))
+                            procedure.IsSelfCompleting = parsedIsSelf;
+
+                        // collect child InternalElements (process values, report values, parameters, ...)
+                        foreach (var child in proc.Elements(ns + "InternalElement"))
+                        {
+                            var childRef = new ElementRef
+                            {
+                                Name = (string?)child.Attribute("Name") ?? "",
+                                RefBaseSystemUnitPath = (string?)child.Attribute("RefBaseSystemUnitPath") ?? "",
+                                RefID = child.Elements(ns + "Attribute")
+                                             .FirstOrDefault(a => (string?)a.Attribute("Name") == "RefID")
+                                             ?.Element(ns + "Value")?.Value ?? ""
+                            };
+
+                            procedure.ChildElements.Add(childRef);
+                        }
+
+                        service.Procedures.Add(procedure);
+                    }
+
+                    _linkedServices.Add(service);
+                }
+            }
+
+            Trace.WriteLine($"ParseLinkedServiceSetsFromManifest: parsed {_linkedServices.Count} services and {_linkedServices.Sum(s => s.Procedures.Count)} procedures from linked aspects.");
         }
 
         private List<ServiceInfo> _services = new List<ServiceInfo>();

@@ -22,6 +22,7 @@
   <eClass Number="36020190" eClassDescription ="Reactor (unspecified)" VOM="" MDVisualObjectMapping="Reactor.emf" XAVisualObjectMapping=""/>
   <eClass Number="36020191" eClassDescription ="Reactor (parts)" VOM="" MDVisualObjectMapping="Reactor.emf" XAVisualObjectMapping=""/>
   <eClass Number="36030000" eClassDescription ="Container" VOM="" MDVisualObjectMapping="vessel.png" XAVisualObjectMapping=""/>
+  <eClass Number="36020490" eClassDescription ="Container" VOM="" MDVisualObjectMapping="vessel.png" XAVisualObjectMapping=""/>
   <eClass Number="36030101" eClassDescription ="" VOM="" MDVisualObjectMapping="Vessel.png" XAVisualObjectMapping=""/>
   <eClass Number="36040190" eClassDescription ="" VOM="" MDVisualObjectMapping="HeatExchanger.emf" XAVisualObjectMapping=""/>
   <eClass Number="36090000" eClassDescription ="Mixer, agitator, kneader" VOM="" MDVisualObjectMapping="Vessel.png" XAVisualObjectMapping=""/>
