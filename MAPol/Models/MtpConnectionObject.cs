@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MAPol
 {
-    internal class MtpConnectionObject
+    public class MtpConnectionObject
     {
         public string Name { get; set; }
         public string RefBaseSystemUnitPath { get; set; }

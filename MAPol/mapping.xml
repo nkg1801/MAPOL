@@ -18,6 +18,9 @@
   <eClass Number="32109000" eClassDescription ="Shaking, stirring, mixing technologie (lab, other)" VOM="Mixer.emf" MDVisualObjectMapping="Mixer.emf" XAVisualObjectMapping="Mixer.emf"/>
   <eClass Number="32120303" eClassDescription ="Lab Thermometer" VOM="temperature-sensor.png" MDVisualObjectMapping="temperature-sensor.png" XAVisualObjectMapping="Mixer.emf"/>
   
+  
+  <eClass Number="36082402" eClassDescription ="Column (unspecified)" VOM="vessel.png" MDVisualObjectMapping="vessel.png" XAVisualObjectMapping="Column.emf"/>
+  
   <eClass Number="36010190" eClassDescription ="Column (unspecified)" VOM="vessel.png" MDVisualObjectMapping="vessel.png" XAVisualObjectMapping="Column.emf"/>
   <eClass Number="36020190" eClassDescription ="Reactor (unspecified)" VOM="" MDVisualObjectMapping="Reactor.emf" XAVisualObjectMapping=""/>
   <eClass Number="36020191" eClassDescription ="Reactor (parts)" VOM="" MDVisualObjectMapping="Reactor.emf" XAVisualObjectMapping=""/>
@@ -30,6 +33,9 @@
   <eClass Number="36201900" eClassDescription ="Filter (for gases)" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
   <eClass Number="36410000" eClassDescription ="" VOM="Pump.emf" MDVisualObjectMapping="Pump.emf" XAVisualObjectMapping="Pump.emf"/>
   <eClass Number="36410190" eClassDescription ="Centrifugal pump (unspecified)" VOM="" MDVisualObjectMapping="Pump.emf" XAVisualObjectMapping=""/>
+  
+  <eClass Number="36430000" eClassDescription ="Gate valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
+  <eClass Number="37010000" eClassDescription ="Gate valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
   
   <eClass Number="37010100" eClassDescription ="Gate valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>
   <eClass Number="37010200" eClassDescription ="Globe valve" VOM="" MDVisualObjectMapping="ControlValve.emf" XAVisualObjectMapping=""/>

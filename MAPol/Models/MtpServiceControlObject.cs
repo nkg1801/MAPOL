@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MAPol
 {
-    internal class MtpServiceControlObject
+    public class MtpServiceControlObject
     {
         public string Name { get; set; }
         public int X { get; set; }

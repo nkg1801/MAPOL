@@ -31,6 +31,7 @@
             components = new System.ComponentModel.Container();
             timer1 = new System.Windows.Forms.Timer(components);
             timerReadTimer = new System.Windows.Forms.Timer(components);
+            panel1 = new Panel();
             SuspendLayout();
             // 
             // timer1
@@ -45,13 +46,23 @@
             timerReadTimer.Interval = 5000;
             timerReadTimer.Tick += timerReadTimer_Tick;
             // 
+            // panel1
+            // 
+            panel1.Dock = DockStyle.Fill;
+            panel1.Location = new Point(0, 0);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(717, 374);
+            panel1.TabIndex = 0;
+            // 
             // FormProcessDisplay1
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.GhostWhite;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(717, 374);
+            Controls.Add(panel1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            Margin = new Padding(3, 2, 3, 2);
             Name = "FormProcessDisplay1";
             Text = "FormProcessDisplay1";
             Load += FormProcessDisplay1_Load;
@@ -62,5 +73,6 @@
 
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Timer timerReadTimer;
+        private Panel panel1;
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MAPol.Models
 {
-    internal class PictureObject
+    public class PictureObject
     {
         public PictureObject() { }
         public string Name { get; set; }
@@ -20,5 +20,13 @@ namespace MAPol.Models
         public List<MtpSourceObject> MtpSourceObjects { get; set; } = new List<MtpSourceObject>();
         public List<TopologyObject> TopologyObjects { get; set; } = new List<TopologyObject>();
         public List<MtpServiceControlObject> ServiceControlObjects { get; set; } = new List<MtpServiceControlObject>();
+
+        private readonly List<ElementInfo> IndicatorElements = new();
+        private readonly List<ElementInfo> ActiveElements = new();
+        private readonly List<ElementInfo> ParameterElements = new();
+        private readonly List<ElementInfo> OperationElements = new();
+        private readonly List<ElementInfo> InputElements = new();
+        private readonly List<ElementInfo> ServiceElements = new();
+        private readonly List<ElementInfo> DiagnosticElements = new();
     }
 }

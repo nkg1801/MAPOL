@@ -7,7 +7,7 @@ using System.Windows.Shapes;
 
 namespace MAPol.Models
 {
-    internal class TopologyObject
+    public class TopologyObject
     {
         public string id {  get; set; }
         public string Name { get; set; }

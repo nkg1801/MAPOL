@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MAPol
 {
-    internal class MtpPortObject
+    public class MtpPortObject
     {
         public string Name { get; set; }
         public string RefBaseSystemUnitPath { get; set; }

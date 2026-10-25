@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MAPol
 {
-    internal class MtpSinkObject
+    public class MtpSinkObject
     {
         public string Name { get; set; }
         public int X { get; set; }

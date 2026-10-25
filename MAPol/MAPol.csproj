@@ -45,4 +45,10 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="mapping.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

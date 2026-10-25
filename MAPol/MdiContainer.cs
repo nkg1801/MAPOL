@@ -10,9 +10,11 @@ using System.IO;
 using System.IO.Compression;
 using System.Web;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using static MAPol.Models.ProcedureInfo;
+using static System.Windows.Forms.DataFormats;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace MAPol
@@ -60,15 +62,23 @@ namespace MAPol
             //try
             //{
             //await Task.Run(() =>
-                //{
-                    importMtpFiles();
-               // });
+            //{
+            importMtpFiles();
+            // });
             //}
             //finally
             //{
-                //progressBar1.Visible = false;
-                groupBox1.Visible = false;
+            progressBar1.Visible = false;
+            groupBox1.Visible = false;
             //}
+        }
+
+        private void AddToRecentFiles(string[] filePath)
+        {
+            foreach (var file in filePath)
+            {
+                AddRecentFile(file);
+            }
         }
 
         /// <summary>
@@ -165,6 +175,7 @@ namespace MAPol
                     Enabled = false
                 };
                 _recentFilesMenu.DropDownItems.Add(none);
+                
                 return;
             }
 
@@ -205,6 +216,7 @@ namespace MAPol
             clearItem.Click += (s, e) =>
             {
                 _recentFiles.Clear();
+                //SaveRecentFiles();
                 RefreshRecentFilesMenu();
             };
             recentMTPFilesToolStripMenuItem.DropDownItems.Add(clearItem);
@@ -217,12 +229,15 @@ namespace MAPol
             {
                 fileList[i] = _recentFiles[i];
             }
-            ImportMtpFile(fileList);
+            if (fileList.Length > 0)
+            {
+                ImportMtpFile(fileList);
+            }
         }
 
         private void toolStripLabel1_Click(object sender, EventArgs e)
         {
-            FormProcessDisplay1 form2 = new FormProcessDisplay1();
+            FormProcessDisplay1 form2 = new FormProcessDisplay1(null, null);
             form2.MdiParent = this;
             form2.Show();
         }
@@ -267,7 +282,7 @@ namespace MAPol
 
                     string[] fileNames = openFileDialog1.SafeFileNames;
                     string[] fileNamesWithPath = openFileDialog1.FileNames;
-                    int i = 0;
+                    AddToRecentFiles(fileNamesWithPath);
                     ImportMtpFiles(fileNamesWithPath);
                 }
             }
@@ -321,7 +336,7 @@ namespace MAPol
             //HMI - Process display
             else if (e.Node.Level == 2)
             {
-                openProcessDisplay(e.Node);
+                openProcessDisplayEx(e.Node);
             }
         }
 
@@ -344,7 +359,7 @@ namespace MAPol
 
         private void openProcessDisplay(TreeNode treeNode)
         {
-            FormProcessDisplay1 formProcessDisplay = new FormProcessDisplay1();
+            FormProcessDisplay1 formProcessDisplay = new FormProcessDisplay1(null, null);
             string key = treeNode.Tag.ToString()!;
 
             // Check whether the tab already exists
@@ -382,11 +397,52 @@ namespace MAPol
             //AddRecentFile(key);
         }
 
+        private void openProcessDisplayEx(TreeNode treeNode)
+        {
+            //FormProcessDisplay1 formProcessDisplay = new FormProcessDisplay1();
+            PictureContainer pictureContainer = new PictureContainer();
+            string key = treeNode.Tag.ToString()!;
+
+            // Check whether the tab already exists
+            foreach (TabPage page in tabControl1.TabPages)
+            {
+                if (page.Name == key)
+                {
+                    tabControl1.SelectedTab = page;
+                    return;
+                }
+            }
+
+            // Create new tab
+            //FormProcessDisplay1 form2 = new FormProcessDisplay1();
+            pictureContainer.MdiParent = this;
+            pictureContainer.TopLevel = false;
+
+            TabPage tabPage = new TabPage
+            {
+                Name = key,             // Unique identifier
+                Text = treeNode.Text
+            };
+
+            tabControl1.TabPages.Add(tabPage);
+            tabPage.Controls.Add(pictureContainer);
+
+            tabControl1.SelectedTab = tabPage;
+
+            pictureContainer.mtpFileName = key;
+            pictureContainer.Dock = DockStyle.Fill;
+            pictureContainer.FormBorderStyle = FormBorderStyle.None;
+            pictureContainer.Show();
+
+            // Add to recent files
+            //AddRecentFile(key);
+        }
+
         Dictionary<string, List<string>> MTPErrors = new Dictionary<string, List<string>>();
 
         public void AddMtpError(string mtpFile, List<string> errorList)
         {
-            if (!MTPErrors.ContainsKey(mtpFile))
+            if (MTPErrors.ContainsKey(mtpFile))
             {
                 MTPErrors[mtpFile] = errorList;
             }
@@ -558,20 +614,27 @@ namespace MAPol
             TreeNode mtpNode = treeViewProject.Nodes[0].Nodes[0];
             foreach (string file in fileList)
             {
-                TreeNode node = new TreeNode(Path.GetFileNameWithoutExtension(file));
-                node.ImageIndex = 0;
-                node.SelectedImageIndex = 0;
-                node.Tag = fileList[i];
-                mtpNode.Nodes.Add(node);
-                node.ContextMenuStrip = contextMenuStripMtpFile;
+                try
+                {
+                    TreeNode node = new TreeNode(Path.GetFileNameWithoutExtension(file));
+                    node.ImageIndex = 0;
+                    node.SelectedImageIndex = 0;
+                    node.Tag = fileList[i];
+                    mtpNode.Nodes.Add(node);
+                    node.ContextMenuStrip = contextMenuStripMtpFile;
 
-                importOpcUaItems(file);
-                ParseServicesFromManifest(file, node);
-                ParseLinkedServiceSetsFromManifest(file);
-                ParseProcessValueSetFromManifest(file, node);
-                ParseOpcUaServersFromManifest(file, node);
-
-                i++;
+                    importOpcUaItems(file);
+                    ParseServicesFromManifest(file, node);
+                    ParseLinkedServiceSetsFromManifest(file);
+                    ParseProcessValueSetFromManifest(file, node);
+                    ParseOpcUaServersFromManifest(file, node);
+                    i++;
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine("Error importing MTP file: " + file + " - " + ex.Message);
+                    continue;
+                }
             }
             mtpNode.Expand();
         }
@@ -581,7 +644,7 @@ namespace MAPol
             List<string> mtpFiles = new List<string>();
             foreach (string path in files)
             {
-                if(File.Exists(path) || Directory.Exists(path))
+                if (File.Exists(path) || Directory.Exists(path))
                 {
                     // Valid path
                 }
@@ -721,7 +784,7 @@ namespace MAPol
                                  .Where(e => ((string)e.Attribute("RefBaseSystemUnitPath")) == "MTPSUCLib/CommunicationSet/SourceList");
 
             TreeNode opcServerNodes = treeNode.Nodes.Add("OPC UA Servers");
-            
+
             foreach (var sourceList in sourceLists)
             {
                 // OPC UA servers are InternalElement children with this RefBaseSystemUnitPath
@@ -824,23 +887,6 @@ namespace MAPol
 
         private void openManifestXMLToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            /*string extractPath = UnpackMtpPackage(treeViewProject.SelectedNode.Tag.ToString());
-
-            string temp = "\"" + extractPath + "\\Manifest.aml" + "\"";
-            try
-            {
-                //Process.Start("notepad++.exe", temp);
-                var psi = new ProcessStartInfo(temp)
-                {
-                    UseShellExecute = true // important on .NET Core/.NET 8 to open via file association
-                };
-                Process.Start(psi);
-            }
-            catch (Exception ex)
-            {
-                Process.Start("notepad.exe", temp);
-            }*/
-
             OpenManifestFile();
         }
 
@@ -850,7 +896,8 @@ namespace MAPol
 
             string temp = "\"" + extractPath + "\\Manifest.aml" + "\"";
             string filePath = extractPath + "\\Manifest.aml";
-            OpenXmlEditor(filePath);
+            //OpenXmlEditor(filePath);
+            OpenXmlEditor2(filePath);
         }
 
         private void treeViewProject_ItemDrag(object sender, ItemDragEventArgs e)
@@ -926,12 +973,46 @@ namespace MAPol
 
             //TabPage tabPage = new TabPage();
             //tabPage.Text = "XML Editor";
+
             tabControl1.TabPages.Add(tabPage);
             tabPage.Controls.Add(xmlEditor);
             tabControl1.SelectedTab = tabPage;
             xmlEditor.Dock = DockStyle.Fill;
             xmlEditor.FormBorderStyle = FormBorderStyle.None;
             xmlEditor.Show();
+        }
+
+        private void OpenXmlEditor2(string filePath)
+        {
+            XmlEditor xmlEditor = new XmlEditor();
+            xmlEditor.ManifestFile = filePath;
+
+            TabPage tabPage1 = tabControl1.TabPages[0];
+            PictureContainer form2 = tabPage1.Controls.OfType<PictureContainer>().FirstOrDefault();
+
+            if (form2 != null)
+            {
+                System.Windows.Forms.TabControl tc2 = form2.Controls
+                                      .OfType<System.Windows.Forms.TabControl>()
+                                      .FirstOrDefault();
+
+                if (tc2 != null)
+                {
+                    TabPage tabPage = new TabPage
+                    {
+                        Name = "xmleditor",             // Unique identifier
+                        Text = "Manifest.xml"
+                    };
+                    tc2.TabPages.Add(tabPage);
+                    xmlEditor.TopLevel = false;
+
+                    tabPage.Controls.Add(xmlEditor);
+                    //tabControl1.SelectedTab = tabPage;
+                    xmlEditor.Dock = DockStyle.Fill;
+                    xmlEditor.FormBorderStyle = FormBorderStyle.None;
+                    xmlEditor.Show();
+                }
+            }
         }
 
         public void ShowMtpInfo()
@@ -1137,7 +1218,7 @@ namespace MAPol
                         Description = (string)procElem.Element(ns + "Description") ?? ""
                     };
 
-                    
+
 
                     proc.RefID = procElem.Elements(ns + "Attribute")
                                          .FirstOrDefault(a => (string)a.Attribute("Name") == "RefID")
@@ -1157,12 +1238,12 @@ namespace MAPol
                     if (bool.TryParse(isSelfStr, out bool parsedIsSelf))
                     {
                         proc.IsSelfCompleting = parsedIsSelf;
-                        
+
                     }
 
                     TreeNode procedureNode = new TreeNode(proc.Name) { Tag = proc };
-                    
-                    if((bool)proc.IsSelfCompleting)
+
+                    if ((bool)proc.IsSelfCompleting)
                     {
                         procedureNode.ForeColor = Color.Green; // or any color you prefer
                     }
@@ -1381,6 +1462,11 @@ namespace MAPol
             public string Access { get; set; } = "";
             public string Identifier { get; set; } = "";
             public string Namespace { get; set; } = "";
+        }
+
+        private void recentMTPFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
