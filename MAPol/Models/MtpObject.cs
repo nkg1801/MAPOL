@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 
 namespace MAPol
 {
+    /// <summary>
+    /// MtpObject represents VisualObject in a manifest mtp file with RefBaseSystemUnitPath as MTPHMISUCLib/VisualObject
+    /// </summary>
     public class MtpObject
     {
+        public string ID { get; set; }
         public string Name { get; set; }
         public string RefID { get; set; }
         public string OPCUAItemId {  get; set; } // RefId of the 'V' attribute

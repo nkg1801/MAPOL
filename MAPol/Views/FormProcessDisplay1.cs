@@ -209,6 +209,7 @@ namespace MAPol
             button.Width = Scale(100);
             button.Height = Scale(50);
             button.Text = mtpSourceObject.Name;
+            //button.Tag = mtpSourceObject.RefID;
             panel1.Controls.Add(button);
         }
 
@@ -222,6 +223,7 @@ namespace MAPol
             button.Height = Scale(50);
             button.Text = mtpObject.Name;
             button.BackColor = Color.DarkGray;
+            button.Tag = mtpObject.RefID;
             panel1.Controls.Add(button);
         }
 
@@ -233,6 +235,7 @@ namespace MAPol
             button.Width = Scale(100);
             button.Height = Scale(50);
             button.Text = mtpObject.Name;
+            //button.Tag = mtpObject.RefID;
             panel1.Controls.Add(button);
         }
 
@@ -288,11 +291,13 @@ namespace MAPol
 
             PictureBox pictureBox = new PictureBox();
             pictureBox.Name = mtpObject.RefID;
+            pictureBox.Tag = mtpObject.ID;
             ToolTip toolTip = new ToolTip();
             toolTip.Tag = mtpObject.RefID;
             //string toolTipText = makeTooltipText(mtpObject.Name, mtpObject.EClassClassificationClass, mtpObject.X, mtpObject.Y, mtpObject.Width, mtpObject.Height);
             string toolTipText = mtpObject.Name + ", eClass: " + mtpObject.EClassClassificationClass;
             toolTip.SetToolTip(pictureBox, toolTipText);
+            
             panel1.Controls.Add(pictureBox);
 
             pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -301,7 +306,8 @@ namespace MAPol
             pictureBox.ClientSize = new System.Drawing.Size(mtpObject.Width, mtpObject.Height);
             pictureBox.Location = new System.Drawing.Point(mtpObject.X + leftMargin, mtpObject.Y + topMargin);
             pictureBox.Image = MyImage;
-            pictureBox.SendToBack();
+            pictureBox.BringToFront();
+            //pictureBox.SendToBack();
             //RotateTransform rotateTransform = new RotateTransform(mtpObject.Rotation);
         }
 
@@ -1663,13 +1669,6 @@ namespace MAPol
                     .FirstOrDefault(a => (string)a.Attribute("Name") == "Access")
                     ?.Element(ns + "Value")
                     ?.Value;
-
-                //Console.WriteLine($"Name      : {name}");
-                //Console.WriteLine($"ID        : {id}");
-                //Console.WriteLine($"Identifier: {identifier}");
-                //Console.WriteLine($"Namespace : {nameSpace}");
-                //Console.WriteLine($"Access    : {access}");
-                //Console.WriteLine();
             }
         }
 
@@ -1866,6 +1865,7 @@ namespace MAPol
         ["DIntMan"] = "BlockValve.emf",
         ["AnaManInt"] = "BlockValve.emf",
         ["AnaMan"] = "BlockValve.emf",
+        ["BinMan"] = "BinaryIndicator.png",
         ["BinManInt"] = "BinaryIndicator.png",
 
         // Parameters

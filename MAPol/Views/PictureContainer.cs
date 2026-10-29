@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Reflection;
 using System.Windows.Forms;
 using System.Xml;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace MAPol.Views
 {
@@ -148,12 +149,6 @@ namespace MAPol.Views
 
         private void parseMtpXml2(string fileName)
         {
-            //mtpObjects.Clear();
-            //mtpConnectionObjects.Clear();
-            //mtpSourceObjects.Clear();
-            //mtpPortObjects.Clear();
-            //mtpSinkObjects.Clear();
-            //mtpJunctionObjects.Clear();
             mtpPictureObjects.Clear();
 
             var pictures = GetPictureNodes();
@@ -163,13 +158,14 @@ namespace MAPol.Views
                 return;
             }
 
-            // Use combined display names (or you can choose the first picture's name)
-            //_displayName = string.Join(", ", pictures.Select(p => p.Attributes["Name"]?.Value).Where(n => !string.IsNullOrEmpty(n)));
+            TreeNode treeNodePictureObjects = SelectedNode.Nodes.Add("Pictures");
 
             // Parse each Picture node and aggregate elements into shared lists
             foreach (XmlNode pictureNode in pictures)
             {
                 String pictureName = pictureNode.Attributes["Name"]?.Value;
+                TreeNode treeNodePictureObject = treeNodePictureObjects.Nodes.Add(pictureName);
+                TreeNode treeNodeVisualObjects = treeNodePictureObject.Nodes.Add("VisualObjects");
                 PictureObject pictureObject = new PictureObject();
                 pictureObject.Name = pictureName;
                 foreach (XmlNode node in pictureNode.ChildNodes)
@@ -208,12 +204,22 @@ namespace MAPol.Views
                         {
                             List<MtpObject> mtpObjects = ParseSemanticGroup(node);
                             pictureObject.MtpObjects.AddRange(mtpObjects);
+                            foreach(MtpObject m in mtpObjects)
+                            {
+                                TreeNode n = treeNodeVisualObjects.Nodes.Add(m.Name);
+                                n.Tag = m.ID;
+                            }
                         }
                         else if (attrValue == "MTPHMISUCLib/VisualObject")
                         {
+                            String id = node.Attributes["ID"]?.Value ?? string.Empty;
                             MtpObject mtpObject = new MtpObject();
+                            mtpObject.ID = id;  
                             mtpObject.RefBaseSystemUnitPath = attrValue;
                             mtpObject.Name = node?.Attributes?["Name"]?.Value;
+                            TreeNode n = treeNodeVisualObjects.Nodes.Add(mtpObject.Name);
+                            n.Tag = id;
+                           
                             foreach (XmlNode loopNodeVar in node.ChildNodes)
                             {
                                 XmlNode node10 = loopNodeVar;
@@ -229,6 +235,7 @@ namespace MAPol.Views
                                 if (node10?.Attributes?["Name"]?.Value == "RefID")
                                 {
                                     mtpObject.RefID = GetValue(node10);
+                                    //n.Tag = mtpObject.RefID;
                                 }
                                 else if (node10?.Attributes?["Name"]?.Value == "eClassVersion")
                                 {
@@ -306,6 +313,8 @@ namespace MAPol.Views
                                         mtpObject.Rotation = int.Parse(tempValue);
                                     }
                                 }
+
+                                
                             }
                             if ((mtpObject.RefID == null || mtpObject.RefID == "") && (mtpObject.EClassClassificationClass == null || mtpObject.EClassClassificationClass == ""))
                             {
@@ -708,6 +717,44 @@ namespace MAPol.Views
             foreach (XmlNode n in node.ChildNodes)
             {
                 if (n.Name == "RoleRequirements")
+                    continue;
+
+                if (n.Name != "InternalElement")
+                    continue;
+
+                string refBasePath =
+                    n.Attributes["RefBaseSystemUnitPath"]?.Value ?? string.Empty;
+
+                // VisualObject
+                if (refBasePath == "MTPHMISUCLib/VisualObject")
+                {
+                    String id = n.Attributes["ID"]?.Value ?? string.Empty;
+                    MtpObject mtpObject = ParseVisualObject(n);
+                    if (mtpObject != null)
+                        mtpObject.ID = id;
+
+                    if (mtpObject != null)
+                        mtpObjects.Add(mtpObject);
+                }
+
+                // Nested SemanticGroup
+                else if (refBasePath == "MTPHMISUCLib/SemanticGroup")
+                {
+                    mtpObjects.AddRange(ParseSemanticGroup(n));
+                }
+            }
+
+            return mtpObjects;
+        }
+
+
+        private List<MtpObject> ParseSemanticGroupOld(XmlNode node)
+        {
+            List<MtpObject> mtpObjects = new List<MtpObject>();
+
+            foreach (XmlNode n in node.ChildNodes)
+            {
+                if (n.Name == "RoleRequirements")
                 {
                     continue;
                 }
@@ -810,6 +857,100 @@ namespace MAPol.Views
             }
 
             return mtpObjects;
+        }
+
+        private MtpObject ParseVisualObject(XmlNode n)
+        {
+            MtpObject mtpObject = new MtpObject();
+
+            mtpObject.RefBaseSystemUnitPath = n.Attributes["RefBaseSystemUnitPath"]?.Value;
+
+            mtpObject.Name = n.Attributes["Name"]?.Value;
+
+            foreach (XmlNode node10 in n.ChildNodes)
+            {
+                if (node10.Name == "RoleRequirements" ||
+                    node10.Name == "Description" ||
+                    node10.Name == "SupportedRoleClass")
+                {
+                    continue;
+                }
+
+                string attributeName =
+                    node10.Attributes["Name"]?.Value ?? string.Empty;
+
+                switch (attributeName)
+                {
+                    case "RefID":
+                        mtpObject.RefID = GetValue(node10);
+                        break;
+
+                    case "Width":
+                        int.TryParse(GetValue(node10), out int width);
+                        mtpObject.Width = width;
+                        break;
+
+                    case "Height":
+                        int.TryParse(GetValue(node10), out int height);
+                        mtpObject.Height = height;
+                        break;
+
+                    case "X":
+                        int.TryParse(GetValue(node10), out int x);
+                        mtpObject.X = x;
+                        break;
+
+                    case "Y":
+                        int.TryParse(GetValue(node10), out int y);
+                        mtpObject.Y = y;
+                        break;
+
+                    case "eClassVersion":
+                        mtpObject.EClassVersion = GetValue(node10);
+                        break;
+
+                    case "eClassClassificationClass":
+                        string tempValue = GetValue(node10);
+                        if (tempValue == null || tempValue.Trim() == string.Empty)
+                        {
+                            mtpObject.EClassClassificationClass = "";
+                        }
+                        else
+                        {
+                            int tempValue2 = 0;
+                            tempValue2 = int.Parse(tempValue.Trim());
+                            if (tempValue2 == 0)
+                            {
+                                mtpObject.EClassClassificationClass = "";
+                            }
+                            else
+                            {
+                                mtpObject.EClassClassificationClass = tempValue;
+                                _eClassesUsed.Add(tempValue2.ToString());
+                            }
+                        }
+                        break;
+
+                    case "ZIndex":
+                        string tempValue1 = GetValue(node10);
+                        if (tempValue1 != string.Empty)
+                        {
+                            mtpObject.ZIndex = int.Parse(tempValue1);
+                        }
+                        break;
+
+                    case "Rotation":
+
+                        string tempValue3 = GetValue(node10);
+                        if (tempValue3 != string.Empty)
+                        {
+                            mtpObject.Rotation = int.Parse(tempValue3);
+                        }
+                        break;
+                }
+            }
+
+            return mtpObject;
         }
 
         private void ParseDataAssemblySetNode()
@@ -1113,5 +1254,6 @@ namespace MAPol.Views
 
         string _vendorName = "";
         List<XmlNode> _pictureNodes = new List<XmlNode>();
+        public TreeNode SelectedNode { get; set; }
     }
 }

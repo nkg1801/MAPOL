@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MAPol.Models
 {
-    internal class OpcUaItem
+    public class OpcUaItem
     {
         public string ServerEndPoint { get; set; }
         public string Name { get; set; }

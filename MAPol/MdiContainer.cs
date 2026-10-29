@@ -1,17 +1,21 @@
 using Aml.Engine.Adapter;
+using Aml.Engine.AmlObjects;
 using Aml.Engine.CAEX;
 using MAPol.Models;
 using MAPol.Views;
 using Opc.Ua;
+using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
 using System.IO.Compression;
+using System.Net;
 using System.Web;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
+using System.Xml;
 using System.Xml.Linq;
 using static MAPol.Models.ProcedureInfo;
 using static System.Windows.Forms.DataFormats;
@@ -399,9 +403,9 @@ namespace MAPol
 
         private void openProcessDisplayEx(TreeNode treeNode)
         {
-            //FormProcessDisplay1 formProcessDisplay = new FormProcessDisplay1();
             PictureContainer pictureContainer = new PictureContainer();
             string key = treeNode.Tag.ToString()!;
+            pictureContainer.SelectedNode = treeNode;
 
             // Check whether the tab already exists
             foreach (TabPage page in tabControl1.TabPages)
@@ -614,6 +618,7 @@ namespace MAPol
             TreeNode mtpNode = treeViewProject.Nodes[0].Nodes[0];
             foreach (string file in fileList)
             {
+                string amlFile = UnpackMtpPackage(file) + "\\Manifest.aml";
                 try
                 {
                     TreeNode node = new TreeNode(Path.GetFileNameWithoutExtension(file));
@@ -622,12 +627,23 @@ namespace MAPol
                     node.Tag = fileList[i];
                     mtpNode.Nodes.Add(node);
                     node.ContextMenuStrip = contextMenuStripMtpFile;
+                    List<OpcUaServer> opcUaServers = new List<OpcUaServer>();
 
-                    importOpcUaItems(file);
-                    ParseServicesFromManifest(file, node);
-                    ParseLinkedServiceSetsFromManifest(file);
-                    ParseProcessValueSetFromManifest(file, node);
-                    ParseOpcUaServersFromManifest(file, node);
+                    int v = GetMtpVersion(amlFile);
+                    if (v < 2)
+                    {
+                        importOpcUaItems(amlFile);
+                        ParseOpcUaServersFromManifest(file, node);
+                    }
+                    else
+                    {
+                        opcUaServers = GetOpcUaServers(amlFile);
+                        populateOpcUaServers(opcUaServers, node);
+                    }
+                    ParseServicesFromManifest(amlFile, node);
+                    ParseLinkedServiceSetsFromManifest(amlFile);
+                    ParseProcessValueSetFromManifest(amlFile, node);
+                    
                     i++;
                 }
                 catch (Exception ex)
@@ -637,6 +653,39 @@ namespace MAPol
                 }
             }
             mtpNode.Expand();
+        }
+
+        private void populateOpcUaServers(List<OpcUaServer> opcUaServers, TreeNode treeNode)
+        {
+            TreeNode opcServerNodes = treeNode.Nodes.Add("OPC UA Servers");
+
+            foreach (var server in opcUaServers)
+            {
+                TreeNode serverNode = new TreeNode(server.Name);
+                opcServerNodes.Nodes.Add(serverNode);
+
+                foreach(OpcUaItem item in server.Items)
+                {
+                    TreeNode itemNode = new TreeNode(item.Name);
+                    serverNode.Nodes.Add(itemNode);
+                }
+            }
+        }   
+
+        private int GetMtpVersion(String fileName)
+        {
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.Load(fileName);
+
+            int version = 0;
+
+            string versionText = xmlDocument.SelectSingleNode("//*[local-name()='Document']")?.Attributes["Version"]?.Value;
+
+            if (versionText != null)
+            {
+                version = int.Parse(versionText.Split('.')[0]);
+            }
+            return version;
         }
 
         private List<string> GetAllDroppedMtpFiles(string[] files)
@@ -693,9 +742,9 @@ namespace MAPol
             return allFilesInDirectoryAndSubDirectory;
         }
 
-        private void importOpcUaItems(string mtpFile)
+        private void importOpcUaItems(string amlFile)
         {
-            string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
+            //string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
             var doc1 = CAEXDocument.LoadFromFile(amlFile).CAEXFile;
 
             foreach (InstanceHierarchyType ih in doc1.InstanceHierarchy)
@@ -721,7 +770,7 @@ namespace MAPol
                                 if (eit.RefBaseClassPath == "MTPCommunicationICLib/DataItem/OPCUAItem")
                                 {
                                     OpcUaItem opcUaItem = new OpcUaItem();
-                                    opcUaItem.ServerEndPoint = serverEndPoint;
+                                    //opcUaItem.ServerEndPoint = serverEndPoint;
                                     opcUaItem.Name = eit.Name;
                                     opcUaItem.Id = eit.ID;
                                     int access = -1;
@@ -863,14 +912,121 @@ namespace MAPol
 
         private void treeViewProject_Click(object sender, EventArgs e)
         {
+            TreeNode tn = treeViewProject.SelectedNode;
 
         }
 
         private void treeViewProject_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
+            /*if (e.Button == MouseButtons.Right)
             {
                 TreeNode clickedNode = treeViewProject.GetNodeAt(e.X, e.Y);
+                if (clickedNode != null)
+                {
+                    treeViewProject.SelectedNode = clickedNode;
+                }
+            }*/
+
+            treeViewProject_MouseDownNew(sender, e);
+        }
+
+        private void treeViewProject_MouseDownNew(object sender, MouseEventArgs e)
+        {
+            //if (e.Button == MouseButtons.Right)
+            {
+                TreeNode clickedNode;
+                TreeNode visualObjectsNode;
+                TreeNode pictureNode;
+                TreeNode picturesNode;
+                TreeNode mtpNode;
+                String key = "";
+                String pictureName = "";
+                String visualObjectRefId = "";
+
+                clickedNode = treeViewProject.GetNodeAt(e.X, e.Y);
+                if (clickedNode != null)
+                {
+                    //visualObjectRefId = clickedNode.Tag?.ToString();
+                    visualObjectsNode = clickedNode.Parent as TreeNode;
+                    if (visualObjectsNode != null)
+                    {
+                        pictureNode = visualObjectsNode.Parent as TreeNode;
+                        if(pictureNode != null)
+                        {
+                            picturesNode = pictureNode.Parent as TreeNode;
+                            if(picturesNode != null)
+                            {
+                                mtpNode = picturesNode.Parent as TreeNode;
+                                if (mtpNode != null && mtpNode.Tag != null)
+                                {
+                                    key = mtpNode.Tag.ToString();
+                                    pictureName = mtpNode.Text;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                TabPage tabPage1;
+                PictureContainer form2;
+
+                foreach (TabPage page in tabControl1.TabPages)
+                {
+                    if (page.Name == key)
+                    {
+                        tabPage1 = page;
+                        tabControl1.SelectedTab = page;
+                        form2 = tabPage1.Controls.OfType<PictureContainer>().FirstOrDefault();
+                        if (form2 != null)
+                        {
+                            System.Windows.Forms.TabControl tc2 = form2.Controls.OfType<System.Windows.Forms.TabControl>().FirstOrDefault();
+
+                            // Check whether the tab already exists
+                            foreach (TabPage page1 in tc2.TabPages)
+                            {
+                                if (page.Text == pictureName)
+                                {
+                                    tc2.SelectedTab = page1;
+                                    //System.Windows.Forms.Control ct = page1.Controls[0];  // Form
+                                    Form form = page1.Controls.OfType<System.Windows.Forms.Form>().FirstOrDefault();
+                                    System.Windows.Forms.Panel panel = form.Controls.OfType<System.Windows.Forms.Panel>().FirstOrDefault();
+                                    if (panel != null)
+                                    {
+                                        foreach(PictureBox pb in panel.Controls.OfType<PictureBox>())
+                                        {
+                                            pb.BackColor = Color.Transparent;
+                                        }
+
+                                        foreach(System.Windows.Forms.Button btn in panel.Controls.OfType<System.Windows.Forms.Button>())
+                                        {
+                                            btn.BackColor = Color.DarkGray;
+                                        }
+                                    }
+
+                                    PictureBox pictureBox = panel.Controls.OfType<PictureBox>().FirstOrDefault(pb => pb.Tag?.ToString() == clickedNode.Tag.ToString());
+                                    if (pictureBox != null)
+                                    {
+                                        pictureBox.BackColor = Color.Yellow;
+                                        pictureBox.Visible = false;
+                                        Thread.Sleep(100);
+                                        pictureBox.Visible = true;
+                                        return;
+                                    }
+
+                                    System.Windows.Forms.Button buttons = panel.Controls.OfType<System.Windows.Forms.Button>().FirstOrDefault(pb => pb.Tag?.ToString() == clickedNode.Tag.ToString());
+                                    if (buttons != null)
+                                    {
+                                        buttons.BackColor = Color.Yellow;
+                                        return;
+                                    }
+                                    return;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+
                 if (clickedNode != null)
                 {
                     treeViewProject.SelectedNode = clickedNode;
@@ -897,7 +1053,7 @@ namespace MAPol
             string temp = "\"" + extractPath + "\\Manifest.aml" + "\"";
             string filePath = extractPath + "\\Manifest.aml";
             //OpenXmlEditor(filePath);
-            OpenXmlEditor2(filePath);
+            OpenXmlEditor2(filePath, treeViewProject.SelectedNode);
         }
 
         private void treeViewProject_ItemDrag(object sender, ItemDragEventArgs e)
@@ -982,37 +1138,64 @@ namespace MAPol
             xmlEditor.Show();
         }
 
-        private void OpenXmlEditor2(string filePath)
+        private void OpenXmlEditor2(string filePath, TreeNode selectedNode)
         {
             XmlEditor xmlEditor = new XmlEditor();
             xmlEditor.ManifestFile = filePath;
+            TabPage tabPage1;
+            PictureContainer form2;
 
-            TabPage tabPage1 = tabControl1.TabPages[0];
-            PictureContainer form2 = tabPage1.Controls.OfType<PictureContainer>().FirstOrDefault();
+            String key = treeViewProject.SelectedNode.Tag.ToString();
 
-            if (form2 != null)
+            foreach (TabPage page in tabControl1.TabPages)
             {
-                System.Windows.Forms.TabControl tc2 = form2.Controls
-                                      .OfType<System.Windows.Forms.TabControl>()
-                                      .FirstOrDefault();
-
-                if (tc2 != null)
+                if (page.Name == key)
                 {
-                    TabPage tabPage = new TabPage
+                    tabPage1 = page;
+                    tabControl1.SelectedTab = page;
+                    form2 = tabPage1.Controls.OfType<PictureContainer>().FirstOrDefault();
+                    if (form2 != null)
                     {
-                        Name = "xmleditor",             // Unique identifier
-                        Text = "Manifest.xml"
-                    };
-                    tc2.TabPages.Add(tabPage);
-                    xmlEditor.TopLevel = false;
+                        System.Windows.Forms.TabControl tc2 = form2.Controls
+                                              .OfType<System.Windows.Forms.TabControl>()
+                                              .FirstOrDefault();
 
-                    tabPage.Controls.Add(xmlEditor);
-                    //tabControl1.SelectedTab = tabPage;
-                    xmlEditor.Dock = DockStyle.Fill;
-                    xmlEditor.FormBorderStyle = FormBorderStyle.None;
-                    xmlEditor.Show();
+                        // Check whether the tab already exists
+                        foreach (TabPage page1 in tc2.TabPages)
+                        {
+                            if (page.Name == "xmleditor")
+                            {
+                                tc2.SelectedTab = page1;
+                                return;
+                            }
+                        }
+
+                        if (tc2 != null)
+                        {
+                            TabPage tabPage = new TabPage
+                            {
+                                Name = "xmleditor",             // Unique identifier
+                                Text = "Manifest.xml"
+                            };
+                            tc2.TabPages.Add(tabPage);
+                            xmlEditor.TopLevel = false;
+
+                            tabPage.Controls.Add(xmlEditor);
+                            tc2.SelectedTab = tabPage;
+                            xmlEditor.Dock = DockStyle.Fill;
+                            xmlEditor.FormBorderStyle = FormBorderStyle.None;
+                            xmlEditor.Show();
+                            //tabPage.acti
+                        }
+                    }
+                    break;
                 }
             }
+
+            //tabPage1 = tabControl1.TabPages[0];
+            
+
+            
         }
 
         public void ShowMtpInfo()
@@ -1034,9 +1217,9 @@ namespace MAPol
         }
 
         List<ProcessValueOutInfo> _processValueOutInfos = new List<ProcessValueOutInfo>();
-        private void ParseProcessValueSetFromManifest(string mtpFile, TreeNode mtpFileNode)
+        private void ParseProcessValueSetFromManifest(string amlFile, TreeNode mtpFileNode)
         {
-            string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
+            //string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
             if (string.IsNullOrEmpty(amlFile) || !File.Exists(amlFile))
             {
                 Trace.WriteLine("ParseServicesFromManifest: manifest file not found: " + amlFile);
@@ -1137,12 +1320,11 @@ namespace MAPol
                     }
                 }
             }
-
         }
 
-        private void ParseServicesFromManifest(string mtpFile, TreeNode mtpFileNode)
+        private void ParseServicesFromManifest(string amlFile, TreeNode mtpFileNode)
         {
-            string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
+            //string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
             if (string.IsNullOrEmpty(amlFile) || !File.Exists(amlFile))
             {
                 Trace.WriteLine("ParseServicesFromManifest: manifest file not found: " + amlFile);
@@ -1310,11 +1492,11 @@ namespace MAPol
 
         // --- Add this parser method near other XDocument parsing helpers (e.g. next to ReadAllOpcUaItemFromManifestFile) ---
         private List<ServiceInfo> _linkedServices = new List<ServiceInfo>();
-        private void ParseLinkedServiceSetsFromManifest(string mtpFile)
+        private void ParseLinkedServiceSetsFromManifest(string amlFile)
         {
             _linkedServices.Clear();
 
-            string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
+            //string amlFile = UnpackMtpPackage(mtpFile) + "\\Manifest.aml";
             if (string.IsNullOrEmpty(amlFile) || !File.Exists(amlFile))
             {
                 Trace.WriteLine("ParseServicesFromManifest: manifest file not found: " + amlFile);
@@ -1443,6 +1625,74 @@ namespace MAPol
 
         }
 
+        private List<OpcUaServer> GetOpcUaServers(String amlFile)
+        {
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.Load(amlFile);
+
+            var ns = new XmlNamespaceManager(xmlDocument.NameTable);
+            ns.AddNamespace("caex", "http://www.dke.de/CAEX");
+
+            var result = new List<OpcUaServer>();
+
+            XmlNode serverAssemblySet = xmlDocument.SelectSingleNode("//caex:InternalElement[@RefBaseSystemUnitPath='MTPServerAssemblySUCLib/ServerAssemblySet']", ns);
+
+            if (serverAssemblySet == null)
+                return result;
+
+            string aspectRef =
+                serverAssemblySet.SelectSingleNode("./caex:ExternalInterface/caex:Attribute[@Name='AspectRef']/caex:Value",ns)?.InnerText;
+
+            if (string.IsNullOrEmpty(aspectRef))
+                return result;
+
+            XmlNode instanceHierarchy =
+                xmlDocument.SelectSingleNode($"//caex:InstanceHierarchy[@ID='{aspectRef}']",ns);
+
+            if (instanceHierarchy == null)
+                return result;
+
+            XmlNodeList opcServers =
+                instanceHierarchy.SelectNodes("./caex:InternalElement[@RefBaseSystemUnitPath='MTPServerAssemblySUCLib/ServerAssembly/OPCUAServer']",
+                    ns);
+
+            foreach (XmlNode serverNode in opcServers)
+            {
+                var server = new OpcUaServer
+                {
+                    Name = serverNode.Attributes["Name"]?.Value,
+                    Endpoint = GetAttributeValue(serverNode, "Endpoint", ns),
+                    MaxSessions = int.TryParse(GetAttributeValue(serverNode, "MaxSessions", ns),out var sessions) ? sessions: 0
+                };
+
+                XmlNodeList itemNodes =
+                    serverNode.SelectNodes(
+                        "./caex:ExternalInterface[@RefBaseClassPath='MTPServerAssemblyICLib/DataItem/OPCUAItem']",
+                        ns);
+
+                foreach (XmlNode itemNode in itemNodes)
+                {
+                    server.Items.Add(new OpcUaItem
+                    {
+                        Id = itemNode.Attributes["ID"]?.Value,
+                        Name = itemNode.Attributes["Name"]?.Value,
+                        OpcUaNamespace = GetAttributeValue(itemNode, "Namespace", ns),
+                        Identifier = GetAttributeValue(itemNode, "Identifier", ns)
+                    });
+                }
+
+                result.Add(server);
+            }
+
+            return result;
+        }
+
+        private static string GetAttributeValue(XmlNode node, string attributeName, XmlNamespaceManager ns)
+        {
+            XmlNode attr = node.SelectSingleNode($"./caex:Attribute[@Name='{attributeName}']/caex:Value", ns);
+            return attr?.InnerText;
+        }
+
         private List<OpcUaServerInfo> _opcUaServers = new List<OpcUaServerInfo>();
 
         private class OpcUaServerInfo
@@ -1463,6 +1713,27 @@ namespace MAPol
             public string Identifier { get; set; } = "";
             public string Namespace { get; set; } = "";
         }
+
+        public class OpcUaServer
+        {
+            public string Name { get; set; }
+            public string ID { get; set; } = "";
+            public string Description { get; set; } = "";
+            public string Endpoint { get; set; }
+
+            public int MaxSessions { get; set; }
+
+            public List<OpcUaItem> Items { get; } = new();
+        }
+
+        /*public class OpcUaItem
+        {
+            public string Name { get; set; }
+            public string Id { get; set; }
+
+            public string Namespace { get; set; }
+            public string Identifier { get; set; }
+        }*/
 
         private void recentMTPFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
