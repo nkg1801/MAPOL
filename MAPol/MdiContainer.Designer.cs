@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            TreeNode treeNode1 = new TreeNode("MTP Libraries");
-            TreeNode treeNode2 = new TreeNode("Plant Topology");
-            TreeNode treeNode3 = new TreeNode("Recipes");
-            TreeNode treeNode4 = new TreeNode("Project Name", new TreeNode[] { treeNode1, treeNode2, treeNode3 });
+            TreeNode treeNode5 = new TreeNode("MTP Libraries");
+            TreeNode treeNode6 = new TreeNode("Plant Topology");
+            TreeNode treeNode7 = new TreeNode("Recipes");
+            TreeNode treeNode8 = new TreeNode("Project Name", new TreeNode[] { treeNode5, treeNode6, treeNode7 });
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MdiContainer));
             contextMenuStrip1 = new ContextMenuStrip(components);
             toolStripMenuItem1 = new ToolStripMenuItem();
@@ -74,6 +74,7 @@
             openManifestXMLToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem5 = new ToolStripSeparator();
             removeToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem6 = new ToolStripMenuItem();
             contextMenuStrip1.SuspendLayout();
             contextMenuStripTopology.SuspendLayout();
             contextMenuStripRecipe.SuspendLayout();
@@ -92,44 +93,44 @@
             contextMenuStrip1.ImageScalingSize = new Size(20, 20);
             contextMenuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem1, removeAllMTPsToolStripMenuItem, toolStripMenuItem4, openAllProcessDisplaysToolStripMenuItem, toolStripSeparator1, recentMTPFilesToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(207, 126);
+            contextMenuStrip1.Size = new Size(246, 112);
             contextMenuStrip1.Opening += contextMenuStrip1_Opening;
             // 
             // toolStripMenuItem1
             // 
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(206, 22);
+            toolStripMenuItem1.Size = new Size(245, 24);
             toolStripMenuItem1.Text = "Import MTP File(s)";
             toolStripMenuItem1.Click += toolStripMenuItem1_Click;
             // 
             // removeAllMTPsToolStripMenuItem
             // 
             removeAllMTPsToolStripMenuItem.Name = "removeAllMTPsToolStripMenuItem";
-            removeAllMTPsToolStripMenuItem.Size = new Size(206, 22);
+            removeAllMTPsToolStripMenuItem.Size = new Size(245, 24);
             removeAllMTPsToolStripMenuItem.Text = "Remove all MTPs";
             removeAllMTPsToolStripMenuItem.Click += removeAllMTPsToolStripMenuItem_Click;
             // 
             // toolStripMenuItem4
             // 
             toolStripMenuItem4.Name = "toolStripMenuItem4";
-            toolStripMenuItem4.Size = new Size(203, 6);
+            toolStripMenuItem4.Size = new Size(242, 6);
             // 
             // openAllProcessDisplaysToolStripMenuItem
             // 
             openAllProcessDisplaysToolStripMenuItem.Name = "openAllProcessDisplaysToolStripMenuItem";
-            openAllProcessDisplaysToolStripMenuItem.Size = new Size(206, 22);
+            openAllProcessDisplaysToolStripMenuItem.Size = new Size(245, 24);
             openAllProcessDisplaysToolStripMenuItem.Text = "Open all process displays";
             openAllProcessDisplaysToolStripMenuItem.Click += openAllProcessDisplaysToolStripMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(203, 6);
+            toolStripSeparator1.Size = new Size(242, 6);
             // 
             // recentMTPFilesToolStripMenuItem
             // 
             recentMTPFilesToolStripMenuItem.Name = "recentMTPFilesToolStripMenuItem";
-            recentMTPFilesToolStripMenuItem.Size = new Size(206, 22);
+            recentMTPFilesToolStripMenuItem.Size = new Size(245, 24);
             recentMTPFilesToolStripMenuItem.Text = "Recent MTP Files";
             recentMTPFilesToolStripMenuItem.Click += recentMTPFilesToolStripMenuItem_Click;
             // 
@@ -138,12 +139,12 @@
             contextMenuStripTopology.ImageScalingSize = new Size(20, 20);
             contextMenuStripTopology.Items.AddRange(new ToolStripItem[] { toolStripMenuItem2 });
             contextMenuStripTopology.Name = "contextMenuStripTopology";
-            contextMenuStripTopology.Size = new Size(150, 26);
+            contextMenuStripTopology.Size = new Size(174, 28);
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(149, 22);
+            toolStripMenuItem2.Size = new Size(173, 24);
             toolStripMenuItem2.Text = "Add Topology";
             // 
             // contextMenuStripRecipe
@@ -151,12 +152,12 @@
             contextMenuStripRecipe.ImageScalingSize = new Size(20, 20);
             contextMenuStripRecipe.Items.AddRange(new ToolStripItem[] { toolStripMenuItem3 });
             contextMenuStripRecipe.Name = "contextMenuStripRecipe";
-            contextMenuStripRecipe.Size = new Size(135, 26);
+            contextMenuStripRecipe.Size = new Size(156, 28);
             // 
             // toolStripMenuItem3
             // 
             toolStripMenuItem3.Name = "toolStripMenuItem3";
-            toolStripMenuItem3.Size = new Size(134, 22);
+            toolStripMenuItem3.Size = new Size(155, 24);
             toolStripMenuItem3.Text = "Add Recipe";
             // 
             // toolStrip1
@@ -165,7 +166,7 @@
             toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripLabel1, toolStripSeparator3, toolStripLabel6, toolStripLabel7, toolStripSeparator2, toolStripButton1, toolStripButtonErrorList, toolStripLabel2, toolStripLabel3, toolStripLabel4, toolStripLabel5 });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
-            toolStrip1.Size = new Size(1100, 81);
+            toolStrip1.Size = new Size(1257, 81);
             toolStrip1.TabIndex = 1;
             toolStrip1.Text = "toolStrip1";
             toolStrip1.ItemClicked += toolStrip1_ItemClicked;
@@ -232,28 +233,28 @@
             // toolStripLabel2
             // 
             toolStripLabel2.Name = "toolStripLabel2";
-            toolStripLabel2.Size = new Size(106, 78);
+            toolStripLabel2.Size = new Size(135, 78);
             toolStripLabel2.Text = "Topology Designer";
             toolStripLabel2.Visible = false;
             // 
             // toolStripLabel3
             // 
             toolStripLabel3.Name = "toolStripLabel3";
-            toolStripLabel3.Size = new Size(42, 78);
+            toolStripLabel3.Size = new Size(54, 78);
             toolStripLabel3.Text = "Recipe";
             toolStripLabel3.Visible = false;
             // 
             // toolStripLabel4
             // 
             toolStripLabel4.Name = "toolStripLabel4";
-            toolStripLabel4.Size = new Size(37, 78);
+            toolStripLabel4.Size = new Size(47, 78);
             toolStripLabel4.Text = "Views";
             toolStripLabel4.Visible = false;
             // 
             // toolStripLabel5
             // 
             toolStripLabel5.Name = "toolStripLabel5";
-            toolStripLabel5.Size = new Size(93, 78);
+            toolStripLabel5.Size = new Size(117, 78);
             toolStripLabel5.Text = "Process Displays";
             toolStripLabel5.Visible = false;
             toolStripLabel5.Click += toolStripLabel5_Click;
@@ -262,7 +263,6 @@
             // 
             splitContainer1.Dock = DockStyle.Fill;
             splitContainer1.Location = new Point(0, 81);
-            splitContainer1.Margin = new Padding(3, 2, 3, 2);
             splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -275,9 +275,9 @@
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(tabControl1);
-            splitContainer1.Size = new Size(1100, 470);
-            splitContainer1.SplitterDistance = 229;
-            splitContainer1.SplitterWidth = 9;
+            splitContainer1.Size = new Size(1257, 654);
+            splitContainer1.SplitterDistance = 261;
+            splitContainer1.SplitterWidth = 10;
             splitContainer1.TabIndex = 3;
             // 
             // labelProjectView
@@ -286,7 +286,7 @@
             labelProjectView.Dock = DockStyle.Top;
             labelProjectView.Location = new Point(0, 0);
             labelProjectView.Name = "labelProjectView";
-            labelProjectView.Size = new Size(229, 20);
+            labelProjectView.Size = new Size(261, 27);
             labelProjectView.TabIndex = 3;
             labelProjectView.Text = "Project Explorer";
             labelProjectView.TextAlign = ContentAlignment.MiddleCenter;
@@ -296,31 +296,28 @@
             groupBox1.Controls.Add(label1);
             groupBox1.Controls.Add(progressBar1);
             groupBox1.Dock = DockStyle.Bottom;
-            groupBox1.Location = new Point(0, 408);
-            groupBox1.Margin = new Padding(3, 2, 3, 2);
+            groupBox1.Location = new Point(0, 571);
             groupBox1.Name = "groupBox1";
-            groupBox1.Padding = new Padding(3, 2, 3, 2);
-            groupBox1.Size = new Size(229, 62);
+            groupBox1.Size = new Size(261, 83);
             groupBox1.TabIndex = 2;
             groupBox1.TabStop = false;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(3, 20);
+            label1.Location = new Point(3, 27);
             label1.Name = "label1";
-            label1.Size = new Size(99, 15);
+            label1.Size = new Size(123, 20);
             label1.TabIndex = 1;
             label1.Text = "Loading project...";
             // 
             // progressBar1
             // 
             progressBar1.Dock = DockStyle.Bottom;
-            progressBar1.Location = new Point(3, 38);
-            progressBar1.Margin = new Padding(3, 2, 3, 2);
+            progressBar1.Location = new Point(3, 51);
             progressBar1.MarqueeAnimationSpeed = 10;
             progressBar1.Name = "progressBar1";
-            progressBar1.Size = new Size(223, 22);
+            progressBar1.Size = new Size(255, 29);
             progressBar1.Style = ProgressBarStyle.Marquee;
             progressBar1.TabIndex = 0;
             // 
@@ -329,31 +326,30 @@
             treeViewProject.AllowDrop = true;
             treeViewProject.ImageKey = "document-management.png";
             treeViewProject.ImageList = imageList1;
-            treeViewProject.Location = new Point(0, 22);
-            treeViewProject.Margin = new Padding(3, 2, 3, 2);
+            treeViewProject.Location = new Point(0, 29);
             treeViewProject.Name = "treeViewProject";
-            treeNode1.ContextMenuStrip = contextMenuStrip1;
-            treeNode1.ImageKey = "mtp-logo-2.png";
-            treeNode1.Name = "NodeMtpLibraries";
-            treeNode1.SelectedImageKey = "mtp-logo-2.png";
-            treeNode1.Text = "MTP Libraries";
-            treeNode2.ContextMenuStrip = contextMenuStripTopology;
-            treeNode2.ImageKey = "topology-structure.png";
-            treeNode2.Name = "NodePlantTopology";
-            treeNode2.SelectedImageKey = "topology-structure.png";
-            treeNode2.Text = "Plant Topology";
-            treeNode3.ContextMenuStrip = contextMenuStripRecipe;
-            treeNode3.ImageKey = "sfc.png";
-            treeNode3.Name = "NodeRecipes";
-            treeNode3.SelectedImageKey = "sfc.png";
-            treeNode3.Text = "Recipes";
-            treeNode4.ImageIndex = 2;
-            treeNode4.Name = "NodeProjectName";
-            treeNode4.SelectedImageKey = "document-management.png";
-            treeNode4.Text = "Project Name";
-            treeViewProject.Nodes.AddRange(new TreeNode[] { treeNode4 });
+            treeNode5.ContextMenuStrip = contextMenuStrip1;
+            treeNode5.ImageKey = "mtp-logo-2.png";
+            treeNode5.Name = "NodeMtpLibraries";
+            treeNode5.SelectedImageKey = "mtp-logo-2.png";
+            treeNode5.Text = "MTP Libraries";
+            treeNode6.ContextMenuStrip = contextMenuStripTopology;
+            treeNode6.ImageKey = "topology-structure.png";
+            treeNode6.Name = "NodePlantTopology";
+            treeNode6.SelectedImageKey = "topology-structure.png";
+            treeNode6.Text = "Plant Topology";
+            treeNode7.ContextMenuStrip = contextMenuStripRecipe;
+            treeNode7.ImageKey = "sfc.png";
+            treeNode7.Name = "NodeRecipes";
+            treeNode7.SelectedImageKey = "sfc.png";
+            treeNode7.Text = "Recipes";
+            treeNode8.ImageIndex = 2;
+            treeNode8.Name = "NodeProjectName";
+            treeNode8.SelectedImageKey = "document-management.png";
+            treeNode8.Text = "Project Name";
+            treeViewProject.Nodes.AddRange(new TreeNode[] { treeNode8 });
             treeViewProject.SelectedImageIndex = 0;
-            treeViewProject.Size = new Size(230, 469);
+            treeViewProject.Size = new Size(262, 624);
             treeViewProject.TabIndex = 0;
             treeViewProject.ItemDrag += treeViewProject_ItemDrag;
             treeViewProject.NodeMouseDoubleClick += treeViewProject_NodeMouseDoubleClick;
@@ -382,10 +378,9 @@
             tabControl1.HotTrack = true;
             tabControl1.ItemSize = new Size(230, 40);
             tabControl1.Location = new Point(0, 0);
-            tabControl1.Margin = new Padding(3, 2, 3, 2);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(862, 470);
+            tabControl1.Size = new Size(986, 654);
             tabControl1.SizeMode = TabSizeMode.Fixed;
             tabControl1.TabIndex = 0;
             tabControl1.DrawItem += tabControl1_DrawItem_1;
@@ -402,66 +397,72 @@
             contextMenuStripTabPage.ImageScalingSize = new Size(20, 20);
             contextMenuStripTabPage.Items.AddRange(new ToolStripItem[] { toolStripMenuItemCloseAllButThis, toolStripMenuItemCloseAllTabs });
             contextMenuStripTabPage.Name = "contextMenuStripTabPage";
-            contextMenuStripTabPage.Size = new Size(187, 48);
+            contextMenuStripTabPage.Size = new Size(220, 52);
             contextMenuStripTabPage.Opening += contextMenuStripTabPage_Opening;
             // 
             // toolStripMenuItemCloseAllButThis
             // 
             toolStripMenuItemCloseAllButThis.Name = "toolStripMenuItemCloseAllButThis";
-            toolStripMenuItemCloseAllButThis.Size = new Size(186, 22);
+            toolStripMenuItemCloseAllButThis.Size = new Size(219, 24);
             toolStripMenuItemCloseAllButThis.Text = "Close all tabs but this";
             toolStripMenuItemCloseAllButThis.Click += toolStripMenuItemCloseAllButThis_Click;
             // 
             // toolStripMenuItemCloseAllTabs
             // 
             toolStripMenuItemCloseAllTabs.Name = "toolStripMenuItemCloseAllTabs";
-            toolStripMenuItemCloseAllTabs.Size = new Size(186, 22);
+            toolStripMenuItemCloseAllTabs.Size = new Size(219, 24);
             toolStripMenuItemCloseAllTabs.Text = "Close All tabs";
             toolStripMenuItemCloseAllTabs.Click += toolStripMenuItemCloseAllTabs_Click;
             // 
             // contextMenuStripMtpFile
             // 
             contextMenuStripMtpFile.ImageScalingSize = new Size(20, 20);
-            contextMenuStripMtpFile.Items.AddRange(new ToolStripItem[] { mTPInfoToolStripMenuItem, openManifestXMLToolStripMenuItem, toolStripMenuItem5, removeToolStripMenuItem });
+            contextMenuStripMtpFile.Items.AddRange(new ToolStripItem[] { mTPInfoToolStripMenuItem, openManifestXMLToolStripMenuItem, toolStripMenuItem6, toolStripMenuItem5, removeToolStripMenuItem });
             contextMenuStripMtpFile.Name = "contextMenuStripMtpFile";
-            contextMenuStripMtpFile.Size = new Size(180, 76);
+            contextMenuStripMtpFile.Size = new Size(300, 134);
             // 
             // mTPInfoToolStripMenuItem
             // 
             mTPInfoToolStripMenuItem.Name = "mTPInfoToolStripMenuItem";
-            mTPInfoToolStripMenuItem.Size = new Size(179, 22);
+            mTPInfoToolStripMenuItem.Size = new Size(299, 24);
             mTPInfoToolStripMenuItem.Text = "MTP Info";
             mTPInfoToolStripMenuItem.Click += mTPInfoToolStripMenuItem_Click;
             // 
             // openManifestXMLToolStripMenuItem
             // 
             openManifestXMLToolStripMenuItem.Name = "openManifestXMLToolStripMenuItem";
-            openManifestXMLToolStripMenuItem.Size = new Size(179, 22);
+            openManifestXMLToolStripMenuItem.Size = new Size(299, 24);
             openManifestXMLToolStripMenuItem.Text = "Open Manifest XML";
             openManifestXMLToolStripMenuItem.Click += openManifestXMLToolStripMenuItem_Click;
             // 
             // toolStripMenuItem5
             // 
             toolStripMenuItem5.Name = "toolStripMenuItem5";
-            toolStripMenuItem5.Size = new Size(176, 6);
+            toolStripMenuItem5.Size = new Size(296, 6);
             // 
             // removeToolStripMenuItem
             // 
             removeToolStripMenuItem.Name = "removeToolStripMenuItem";
-            removeToolStripMenuItem.Size = new Size(179, 22);
+            removeToolStripMenuItem.Size = new Size(299, 24);
             removeToolStripMenuItem.Text = "Remove";
             removeToolStripMenuItem.Click += removeToolStripMenuItem_Click;
             // 
+            // toolStripMenuItem6
+            // 
+            toolStripMenuItem6.Name = "toolStripMenuItem6";
+            toolStripMenuItem6.Size = new Size(299, 24);
+            toolStripMenuItem6.Text = "Open Manifest file in Notepad++";
+            toolStripMenuItem6.Click += toolStripMenuItem6_Click;
+            // 
             // MdiContainer
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1100, 551);
+            ClientSize = new Size(1257, 735);
             Controls.Add(splitContainer1);
             Controls.Add(toolStrip1);
             IsMdiContainer = true;
             KeyPreview = true;
-            Margin = new Padding(3, 2, 3, 2);
             Name = "MdiContainer";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Modular Automation - POL";
@@ -528,5 +529,6 @@
         private Label label1;
         private ProgressBar progressBar1;
         private Label labelProjectView;
+        private ToolStripMenuItem toolStripMenuItem6;
     }
 }

@@ -179,7 +179,7 @@ namespace MAPol
                     Enabled = false
                 };
                 _recentFilesMenu.DropDownItems.Add(none);
-                
+
                 return;
             }
 
@@ -616,9 +616,15 @@ namespace MAPol
             List<string> fileList = GetAllDroppedMtpFiles(files);
             int i = 0;
             TreeNode mtpNode = treeViewProject.Nodes[0].Nodes[0];
+            _mtpToAmlMap.Clear();
+
             foreach (string file in fileList)
             {
                 string amlFile = UnpackMtpPackage(file) + "\\Manifest.aml";
+                
+                //string mtpFileName = Path.GetFileName(file);
+                _mtpToAmlMap[file] = amlFile;
+                
                 try
                 {
                     TreeNode node = new TreeNode(Path.GetFileNameWithoutExtension(file));
@@ -643,7 +649,7 @@ namespace MAPol
                     ParseServicesFromManifest(amlFile, node);
                     ParseLinkedServiceSetsFromManifest(amlFile);
                     ParseProcessValueSetFromManifest(amlFile, node);
-                    
+
                     i++;
                 }
                 catch (Exception ex)
@@ -655,6 +661,17 @@ namespace MAPol
             mtpNode.Expand();
         }
 
+        
+
+/*foreach (string mtpFile in fileList)
+{
+    string amlFile = Path.Combine(UnpackMtpPackage(mtpFile), "Manifest.aml");
+
+        string mtpFileName = Path.GetFileName(mtpFile);
+
+        mtpToAmlMap[mtpFileName] = amlFile;
+}*/
+
         private void populateOpcUaServers(List<OpcUaServer> opcUaServers, TreeNode treeNode)
         {
             TreeNode opcServerNodes = treeNode.Nodes.Add("OPC UA Servers");
@@ -664,13 +681,13 @@ namespace MAPol
                 TreeNode serverNode = new TreeNode(server.Name);
                 opcServerNodes.Nodes.Add(serverNode);
 
-                foreach(OpcUaItem item in server.Items)
+                foreach (OpcUaItem item in server.Items)
                 {
                     TreeNode itemNode = new TreeNode(item.Name);
                     serverNode.Nodes.Add(itemNode);
                 }
             }
-        }   
+        }
 
         private int GetMtpVersion(String fileName)
         {
@@ -951,10 +968,10 @@ namespace MAPol
                     if (visualObjectsNode != null)
                     {
                         pictureNode = visualObjectsNode.Parent as TreeNode;
-                        if(pictureNode != null)
+                        if (pictureNode != null)
                         {
                             picturesNode = pictureNode.Parent as TreeNode;
-                            if(picturesNode != null)
+                            if (picturesNode != null)
                             {
                                 mtpNode = picturesNode.Parent as TreeNode;
                                 if (mtpNode != null && mtpNode.Tag != null)
@@ -992,12 +1009,12 @@ namespace MAPol
                                     System.Windows.Forms.Panel panel = form.Controls.OfType<System.Windows.Forms.Panel>().FirstOrDefault();
                                     if (panel != null)
                                     {
-                                        foreach(PictureBox pb in panel.Controls.OfType<PictureBox>())
+                                        foreach (PictureBox pb in panel.Controls.OfType<PictureBox>())
                                         {
                                             pb.BackColor = Color.Transparent;
                                         }
 
-                                        foreach(System.Windows.Forms.Button btn in panel.Controls.OfType<System.Windows.Forms.Button>())
+                                        foreach (System.Windows.Forms.Button btn in panel.Controls.OfType<System.Windows.Forms.Button>())
                                         {
                                             btn.BackColor = Color.DarkGray;
                                         }
@@ -1193,9 +1210,7 @@ namespace MAPol
             }
 
             //tabPage1 = tabControl1.TabPages[0];
-            
 
-            
         }
 
         public void ShowMtpInfo()
@@ -1641,13 +1656,13 @@ namespace MAPol
                 return result;
 
             string aspectRef =
-                serverAssemblySet.SelectSingleNode("./caex:ExternalInterface/caex:Attribute[@Name='AspectRef']/caex:Value",ns)?.InnerText;
+                serverAssemblySet.SelectSingleNode("./caex:ExternalInterface/caex:Attribute[@Name='AspectRef']/caex:Value", ns)?.InnerText;
 
             if (string.IsNullOrEmpty(aspectRef))
                 return result;
 
             XmlNode instanceHierarchy =
-                xmlDocument.SelectSingleNode($"//caex:InstanceHierarchy[@ID='{aspectRef}']",ns);
+                xmlDocument.SelectSingleNode($"//caex:InstanceHierarchy[@ID='{aspectRef}']", ns);
 
             if (instanceHierarchy == null)
                 return result;
@@ -1662,7 +1677,7 @@ namespace MAPol
                 {
                     Name = serverNode.Attributes["Name"]?.Value,
                     Endpoint = GetAttributeValue(serverNode, "Endpoint", ns),
-                    MaxSessions = int.TryParse(GetAttributeValue(serverNode, "MaxSessions", ns),out var sessions) ? sessions: 0
+                    MaxSessions = int.TryParse(GetAttributeValue(serverNode, "MaxSessions", ns), out var sessions) ? sessions : 0
                 };
 
                 XmlNodeList itemNodes =
@@ -1739,5 +1754,31 @@ namespace MAPol
         {
 
         }
+
+        private void toolStripMenuItem6_Click(object sender, EventArgs e)
+        {
+            OpenManifestFileInNotepadPlusPlus();
+        }
+
+        private void OpenManifestFileInNotepadPlusPlus()
+        {
+            String mtpFileName = treeViewProject.SelectedNode.Tag.ToString();
+
+            if (_mtpToAmlMap.TryGetValue(mtpFileName, out string manifestFile))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = @"C:\Program Files\Notepad++\notepad++.exe",
+                    Arguments = $"\"{manifestFile}\"",
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                
+            }
+        }
+
+        Dictionary<string, string> _mtpToAmlMap = new Dictionary<string, string>();
     }
 }

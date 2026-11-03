@@ -210,9 +210,20 @@ namespace MAPol.Views
                                 n.Tag = m.ID;
                             }
                         }
+
                         else if (attrValue == "MTPHMISUCLib/VisualObject")
                         {
                             String id = node.Attributes["ID"]?.Value ?? string.Empty;
+                            MtpObject mtpObject = ParseVisualObject(node);
+                            if (mtpObject != null)
+                            {
+                                mtpObject.ID = id;
+                                pictureObject.MtpObjects.Add(mtpObject);
+                                TreeNode n = treeNodeVisualObjects.Nodes.Add(mtpObject.Name);
+                                n.Tag = id;
+                            }
+
+                            /*String id = node.Attributes["ID"]?.Value ?? string.Empty;
                             MtpObject mtpObject = new MtpObject();
                             mtpObject.ID = id;  
                             mtpObject.RefBaseSystemUnitPath = attrValue;
@@ -320,8 +331,8 @@ namespace MAPol.Views
                             {
                                 Trace.WriteLine("MTP Renderer -> Warning: VisualObject " + mtpObject.Name + " has no RefID");
                                 mtpErrors.Add("VisualObject " + mtpObject.Name + " has no RefID and no eClassClassificationClass");
-                            }
-                            pictureObject.MtpObjects.Add(mtpObject);
+                            }*/
+                            //pictureObject.MtpObjects.Add(mtpObject);
                         }
                         else if (attrValue == "MTPHMISUCLib/Connection/MeasurementLine" || attrValue == "MTPHMISUCLib/Connection/Pipe"
                             || attrValue == "MTPHMISUCLib/Connection/FunctionLine")
@@ -520,7 +531,6 @@ namespace MAPol.Views
                                     }
                                 }
                             }
-                            //mtpSourceObjects.Add(mtpSourceObject);
                             pictureObject.MtpSourceObjects.Add(mtpSourceObject);
                         }
 
@@ -555,7 +565,6 @@ namespace MAPol.Views
                                     }
                                 }
                             }
-                            //mtpSinkObjects.Add(mtpSinkObject);
                             pictureObject.MtpSinkObjects.Add(mtpSinkObject);
                         }
 
@@ -588,7 +597,6 @@ namespace MAPol.Views
                                     }
                                 }
                             }
-                            //mtpPortObjects.Add(mtpPortObject); //todo: this can be removed later if the line below works
                             pictureObject.MtpPortObjects.Add(mtpPortObject);
                         }
                         else if (attrValue == "MTPHMISUCLib/TopologyObject/Junction")
@@ -621,12 +629,11 @@ namespace MAPol.Views
                                     }
                                 }
                             }
-                            //mtpJunctionObjects.Add(mtpJunctionObject);
                             pictureObject.MtpJunctionObjects.Add(mtpJunctionObject);
                         }
                     }
                 }
-                mtpPictureObjects.Add(pictureObject); // Add the parsed picture object to the list
+                mtpPictureObjects.Add(pictureObject); 
             }
         }
 
@@ -747,118 +754,6 @@ namespace MAPol.Views
             return mtpObjects;
         }
 
-
-        private List<MtpObject> ParseSemanticGroupOld(XmlNode node)
-        {
-            List<MtpObject> mtpObjects = new List<MtpObject>();
-
-            foreach (XmlNode n in node.ChildNodes)
-            {
-                if (n.Name == "RoleRequirements")
-                {
-                    continue;
-                }
-                if (n.Name == "InternalElement" && n.Attributes["RefBaseSystemUnitPath"].Value == "MTPHMISUCLib/VisualObject")
-                {
-                    MtpObject mtpObject = new MtpObject();
-                    mtpObject.RefBaseSystemUnitPath = n.Attributes["RefBaseSystemUnitPath"].Value;
-                    mtpObject.Name = n.Attributes["Name"].Value;
-                    foreach (XmlNode loopNodeVar in n.ChildNodes)
-                    {
-                        XmlNode node10 = loopNodeVar;
-                        if (node10.Name == "RoleRequirements" || node10.Name == "Description" || node10.Name == "SupportedRoleClass")
-                        {
-                            continue;
-                        }
-
-                        if (node10.Attributes["Name"].Value == "RefID")
-                        {
-                            mtpObject.RefID = GetValue(node10);
-                        }
-                        else if (node10.Attributes["Name"].Value == "eClassVersion")
-                        {
-                            mtpObject.EClassVersion = GetValue(node10);
-                        }
-                        else if (node10.Attributes["Name"].Value == "eClassClassificationClass")
-                        {
-                            string tempValue = GetValue(node10);
-                            if (tempValue == null || tempValue.Trim() == string.Empty)
-                            {
-                                mtpObject.EClassClassificationClass = "";
-                            }
-                            else
-                            {
-                                int tempValue2 = 0;
-                                tempValue2 = int.Parse(tempValue.Trim());
-                                if (tempValue2 == 0)
-                                {
-                                    mtpObject.EClassClassificationClass = "";
-                                }
-                                else
-                                {
-                                    mtpObject.EClassClassificationClass = tempValue;
-                                    _eClassesUsed.Add(tempValue2.ToString());
-                                }
-                            }
-                        }
-
-                        else if (node10.Attributes["Name"].Value == "Width")
-                        {
-                            string tempValue = GetValue(node10);
-                            if (tempValue != string.Empty)
-                            {
-                                mtpObject.Width = int.Parse(tempValue);
-                            }
-                        }
-
-                        else if (node10.Attributes["Name"].Value == "Height")
-                        {
-                            string tempValue = GetValue(node10);
-                            if (tempValue != string.Empty)
-                            {
-                                mtpObject.Height = int.Parse(tempValue);
-                            }
-                        }
-                        else if (node10.Attributes["Name"].Value == "X")
-                        {
-                            string tempValue = GetValue(node10);
-                            if (tempValue != string.Empty)
-                            {
-                                mtpObject.X = int.Parse(tempValue);
-                            }
-                        }
-                        else if (node10.Attributes["Name"].Value == "Y")
-                        {
-                            string tempValue = GetValue(node10);
-                            if (tempValue != string.Empty)
-                            {
-                                mtpObject.Y = int.Parse(tempValue);
-                            }
-                        }
-                        else if (node10.Attributes["Name"].Value == "ZIndex")
-                        {
-                            string tempValue = GetValue(node10);
-                            if (tempValue != string.Empty)
-                            {
-                                mtpObject.ZIndex = int.Parse(tempValue);
-                            }
-                        }
-                        else if (node10.Attributes["Name"].Value == "Rotation")
-                        {
-                            string tempValue = GetValue(node10);
-                            if (tempValue != string.Empty)
-                            {
-                                mtpObject.Rotation = int.Parse(tempValue);
-                            }
-                        }
-                    }
-                    mtpObjects.Add(mtpObject);
-                }
-            }
-
-            return mtpObjects;
-        }
-
         private MtpObject ParseVisualObject(XmlNode n)
         {
             MtpObject mtpObject = new MtpObject();
@@ -869,15 +764,12 @@ namespace MAPol.Views
 
             foreach (XmlNode node10 in n.ChildNodes)
             {
-                if (node10.Name == "RoleRequirements" ||
-                    node10.Name == "Description" ||
-                    node10.Name == "SupportedRoleClass")
+                if (node10.Name == "RoleRequirements" || node10.Name == "Description" || node10.Name == "SupportedRoleClass")
                 {
                     continue;
                 }
 
-                string attributeName =
-                    node10.Attributes["Name"]?.Value ?? string.Empty;
+                string attributeName = node10.Attributes["Name"]?.Value ?? string.Empty;
 
                 switch (attributeName)
                 {
@@ -910,7 +802,15 @@ namespace MAPol.Views
                         break;
 
                     case "eClassClassificationClass":
-                        string tempValue = GetValue(node10);
+                        string tempValue = GetEClassNumber(node10);
+                        mtpObject.EClassClassificationClass = tempValue;
+
+                        if (!string.IsNullOrEmpty(tempValue))
+                        {
+                            _eClassesUsed.Add(tempValue.ToString());
+                        }
+
+                        /*string tempValue = GetValue(node10);
                         if (tempValue == null || tempValue.Trim() == string.Empty)
                         {
                             mtpObject.EClassClassificationClass = "";
@@ -928,7 +828,7 @@ namespace MAPol.Views
                                 mtpObject.EClassClassificationClass = tempValue;
                                 _eClassesUsed.Add(tempValue2.ToString());
                             }
-                        }
+                        }*/
                         break;
 
                     case "ZIndex":
@@ -951,6 +851,28 @@ namespace MAPol.Views
             }
 
             return mtpObject;
+        }
+
+        private string GetEClassNumber(XmlNode xmlNode)
+        {
+            string tempValue = GetValue(xmlNode);
+            if (tempValue == null || tempValue.Trim() == string.Empty)
+            {
+                return string.Empty;
+            }
+            else
+            {
+                int tempValue2 = 0;
+                tempValue2 = int.Parse(tempValue.Trim());
+                if (tempValue2 == 0)
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    return tempValue;
+                }
+            }
         }
 
         private void ParseDataAssemblySetNode()
